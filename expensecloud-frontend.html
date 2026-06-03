@@ -14,19 +14,19 @@
         }
 
         :root {
-            --bg-primary: #0a0e27;
-            --bg-secondary: #111629;
-            --bg-tertiary: #1a1f3a;
-            --bg-hover: #232d52;
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-primary: #f5f7fa;
-            --text-secondary: #a0aec0;
-            --text-tertiary: #718096;
-            --accent-primary: #7c6aff;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --info: #3b82f6;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f8f8;
+            --bg-tertiary: #f3f3f3;
+            --bg-hover: #efefef;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --text-tertiary: #999999;
+            --accent-primary: #3366cc;
+            --success: #666666;
+            --danger: #666666;
+            --warning: #666666;
+            --info: #666666;
         }
 
         html, body {
@@ -35,7 +35,7 @@
             width: 100%;
             height: 100%;
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            background: var(--bg-primary);
             color: var(--text-primary);
             overflow: hidden;
         }
@@ -63,7 +63,7 @@
         }
 
         .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(124, 106, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 3px;
         }
 
@@ -79,9 +79,7 @@
             gap: 12px;
             font-size: 22px;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-primary), #ff6eb4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-primary);
         }
 
         .logo-icon {
@@ -117,7 +115,7 @@
         }
 
         .menu-link.active {
-            background: linear-gradient(135deg, rgba(124, 106, 255, 0.15), rgba(255, 110, 180, 0.1));
+            background: var(--bg-hover);
             color: var(--accent-primary);
             border-left: 3px solid var(--accent-primary);
             padding-left: 12px;
@@ -240,7 +238,7 @@
         }
 
         .content::-webkit-scrollbar-thumb {
-            background: rgba(124, 106, 255, 0.3);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 4px;
         }
 
@@ -253,11 +251,11 @@
         }
 
         .card {
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
@@ -265,7 +263,7 @@
 
         .card:hover {
             border-color: var(--accent-primary);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
 
@@ -294,15 +292,15 @@
         }
 
         .value-income {
-            color: var(--success);
+            color: var(--text-primary);
         }
 
         .value-expense {
-            color: var(--danger);
+            color: var(--text-primary);
         }
 
         .value-savings {
-            color: var(--info);
+            color: var(--text-primary);
         }
 
         .progress-container {
@@ -325,7 +323,7 @@
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent-primary), #ff6eb4);
+            background: var(--accent-primary);
             border-radius: 4px;
             width: 91.4%;
         }
@@ -339,11 +337,11 @@
         }
 
         .chart-container {
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .chart-title {
@@ -364,7 +362,7 @@
 
         .chart-bar {
             flex: 1;
-            background: linear-gradient(180deg, var(--accent-primary), #6d5de8);
+            background: var(--accent-primary);
             border-radius: 8px 8px 0 0;
             position: relative;
             min-height: 30px;
@@ -389,11 +387,11 @@
 
         /* TRANSACTIONS SECTION */
         .transactions-section {
-            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 16px;
             padding: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .section-header {
@@ -430,14 +428,14 @@
             justify-content: space-between;
             align-items: center;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             transition: all 0.3s ease;
         }
 
         .transaction-item:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: var(--bg-hover);
             border-color: var(--accent-primary);
         }
 
@@ -458,11 +456,11 @@
         }
 
         .icon-expense {
-            background: rgba(239, 68, 68, 0.15);
+            background: var(--bg-hover);
         }
 
         .icon-income {
-            background: rgba(16, 185, 129, 0.15);
+            background: var(--bg-hover);
         }
 
         .transaction-details h4 {
@@ -484,11 +482,11 @@
         }
 
         .amount-expense {
-            color: var(--danger);
+            color: var(--text-primary);
         }
 
         .amount-income {
-            color: var(--success);
+            color: var(--text-primary);
         }
 
         /* BUTTON */
@@ -499,7 +497,7 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent-primary), #ff6eb4);
+            background: var(--accent-primary);
             color: white;
             border: none;
             cursor: pointer;
@@ -507,14 +505,14 @@
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            box-shadow: 0 10px 15px rgba(124, 106, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
             z-index: 50;
         }
 
         .fab:hover {
             transform: scale(1.1);
-            box-shadow: 0 15px 30px rgba(124, 106, 255, 0.4);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
 
         /* SCREEN VISIBILITY */
@@ -534,7 +532,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.3);
             z-index: 200;
             align-items: center;
             justify-content: center;
@@ -550,7 +548,7 @@
             padding: 30px;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             border: 1px solid var(--border-color);
         }
 
@@ -608,13 +606,13 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), #ff6eb4);
+            background: var(--accent-primary);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(124, 106, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .btn-secondary {
@@ -753,28 +751,27 @@
                         </div>
                     </div>
 
-                    <!-- CHARTS - 2 COLUMNS -->
                     <div class="charts-grid">
                         <div class="chart-container">
                             <h3 class="chart-title">Spending by Category (This Month)</h3>
                             <div class="mini-chart">
-                                <div class="chart-bar" style="height: 85%; background: linear-gradient(180deg, #ef4444, #dc2626);"><span class="chart-bar-label">Food<br>₹42K</span></div>
-                                <div class="chart-bar" style="height: 60%; background: linear-gradient(180deg, #3b82f6, #1d4ed8);"><span class="chart-bar-label">Transport<br>₹30K</span></div>
-                                <div class="chart-bar" style="height: 45%; background: linear-gradient(180deg, #8b5cf6, #6d28d9);"><span class="chart-bar-label">Entertainment<br>₹23K</span></div>
-                                <div class="chart-bar" style="height: 70%; background: linear-gradient(180deg, #f59e0b, #d97706);"><span class="chart-bar-label">Utilities<br>₹35K</span></div>
-                                <div class="chart-bar" style="height: 50%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Healthcare<br>₹25K</span></div>
+                                <div class="chart-bar" style="height: 85%;"><span class="chart-bar-label">Food<br>₹42K</span></div>
+                                <div class="chart-bar" style="height: 60%;"><span class="chart-bar-label">Transport<br>₹30K</span></div>
+                                <div class="chart-bar" style="height: 45%;"><span class="chart-bar-label">Entertainment<br>₹23K</span></div>
+                                <div class="chart-bar" style="height: 70%;"><span class="chart-bar-label">Utilities<br>₹35K</span></div>
+                                <div class="chart-bar" style="height: 50%;"><span class="chart-bar-label">Healthcare<br>₹25K</span></div>
                             </div>
                         </div>
 
                         <div class="chart-container">
                             <h3 class="chart-title">Income vs Expenses (Last 6 Months)</h3>
                             <div class="mini-chart">
-                                <div class="chart-bar" style="height: 100%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Oct<br>180K</span></div>
-                                <div class="chart-bar" style="height: 95%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Nov<br>171K</span></div>
-                                <div class="chart-bar" style="height: 98%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Dec<br>176K</span></div>
-                                <div class="chart-bar" style="height: 92%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Jan<br>165K</span></div>
-                                <div class="chart-bar" style="height: 96%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Feb<br>172K</span></div>
-                                <div class="chart-bar" style="height: 100%; background: linear-gradient(180deg, #10b981, #059669);"><span class="chart-bar-label">Mar<br>180K</span></div>
+                                <div class="chart-bar" style="height: 100%;"><span class="chart-bar-label">Oct<br>180K</span></div>
+                                <div class="chart-bar" style="height: 95%;"><span class="chart-bar-label">Nov<br>171K</span></div>
+                                <div class="chart-bar" style="height: 98%;"><span class="chart-bar-label">Dec<br>176K</span></div>
+                                <div class="chart-bar" style="height: 92%;"><span class="chart-bar-label">Jan<br>165K</span></div>
+                                <div class="chart-bar" style="height: 96%;"><span class="chart-bar-label">Feb<br>172K</span></div>
+                                <div class="chart-bar" style="height: 100%;"><span class="chart-bar-label">Mar<br>180K</span></div>
                             </div>
                         </div>
                     </div>
