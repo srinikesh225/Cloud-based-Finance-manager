@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>ExpenseCloud — Smart Finance Manager</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #ffffff;
+  --bg2: #f8f8f8;
+  --bg3: #f3f3f3;
+  --bg4: #efefef;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.1);
+  --text: #000000;
+  --text2: #666666;
+  --text3: #999999;
+  --accent: #3366cc;
+  --accent2: #254fa0;
+  --green: #666666;
+  --green2: #666666;
+  --red: #666666;
+  --red2: #666666;
+  --amber: #666666;
+  --amber2: #666666;
+  --blue: #666666;
+  --pink: #666666;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;max-width:420px;margin:0 auto;position:relative}
+
+/* ── PHONE SHELL ── */
+.phone{min-height:100vh;background:var(--bg);position:relative;overflow:hidden}
+
+/* ── STATUS BAR ── */
+.statusbar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px 6px;position:relative;z-index:10}
+.sb-time{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text)}
+.sb-right{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+
+/* ── SCREENS ── */
+.screen{display:none;padding-bottom:90px;position:relative;z-index:1;animation:fadeIn 0.25s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TOP HEADER ── */
+.topheader{padding:12px 20px 16px;display:flex;align-items:center;justify-content:space-between}
+.th-left{}
+.th-greeting{font-size:12px;color:var(--text3);font-weight:400;margin-bottom:2px}
+.th-name{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.th-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.notif-btn{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:0.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative}
+.notif-dot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:7px;right:7px;border:1.5px solid var(--bg)}
+
+/* ── BALANCE HERO ── */
+.balance-hero{margin:0 20px 20px;background:var(--bg3);border-radius:20px;padding:20px;border:0.5px solid rgba(0,0,0,0.08);position:relative;overflow:hidden}
+.bh-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--mono)}
+.bh-amount{font-size:38px;font-weight:900;letter-spacing:-2px;color:var(--text);line-height:1;margin-bottom:4px}
+.bh-amount span{font-size:22px;font-weight:600;vertical-align:top;margin-top:5px;display:inline-block;color:var(--text2)}
+.bh-change{font-size:12px;font-family:var(--mono);color:var(--green);margin-bottom:16px}
+.bh-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bh-stat{background:rgba(255,255,255,0.04);border-radius:12px;padding:10px 12px;border:0.5px solid var(--border)}
+.bh-stat-lbl{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:500}
+.bh-stat-val{font-size:16px;font-weight:700;letter-spacing:-0.5px}
+.income-val{color:var(--green)}
+.expense-val{color:var(--red)}
+
+/* ── FORECAST BAR ── */
+.forecast-section{margin:0 20px 20px}
+.section-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;text-transform:uppercase;letter-spacing:0.5px}
+.see-all{font-size:11px;color:var(--accent);font-weight:600;cursor:pointer}
+.forecast-card{background:var(--bg3);border-radius:16px;padding:16px;border:0.5px solid var(--border2)}
+.fc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.fc-label{font-size:12px;color:var(--text2);font-weight:500}
+.fc-pct{font-size:12px;font-family:var(--mono);font-weight:600;color:var(--amber)}
+.fc-bar-track{height:8px;background:rgba(255,255,255,0.06);border-radius:4px;margin-bottom:8px;overflow:hidden}
+.fc-bar-fill{height:8px;border-radius:4px;background:var(--accent);transition:width 1.2s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
+.fc-bar-fill::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 2s infinite}
+@keyframes shimmer{to{left:100%}}
+.fc-sub{display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.fc-spent{color:var(--text3);font-family:var(--mono)}
+.fc-predicted{color:var(--amber);font-family:var(--mono)}
+.anomaly-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,95,126,0.12);border:0.5px solid rgba(255,95,126,0.3);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--red);margin-top:8px;cursor:pointer}
+.anomaly-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+
+/* ── QUICK ACTIONS ── */
+.quick-actions{margin:0 20px 20px}
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.qa-item{background:var(--bg3);border-radius:14px;padding:12px 6px;text-align:center;border:0.5px solid var(--border);cursor:pointer;transition:all 0.2s;active:scale(0.96)}
+.qa-item:active{transform:scale(0.95);background:var(--bg4)}
+.qa-icon{width:36px;height:36px;border-radius:10px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.qa-label{font-size:10px;font-weight:600;color:var(--text2);line-height:1.2}
+
+/* ── TRANSACTIONS ── */
+.txn-list{margin:0 20px}
+.txn-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border)}
+.txn-item:last-child{border-bottom:none}
+.txn-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.txn-info{flex:1}
+.txn-name{font-size:14px;font-weight:600;margin-bottom:2px}
+.txn-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.txn-right{text-align:right}
+.txn-amt{font-size:14px;font-weight:700;font-family:var(--mono)}
+.txn-amt.neg{color:var(--red)}
+.txn-amt.pos{color:var(--green)}
+.txn-time{font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);border-top:0.5px solid var(--border2);display:flex;padding:8px 0 20px;z-index:100}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;transition:all 0.2s}
+.bn-icon{font-size:20px;transition:transform 0.2s}
+.bn-label{font-size:10px;font-weight:600;color:var(--text3);transition:color 0.2s}
+.bn-item.active .bn-label{color:var(--accent)}
+.bn-item.active .bn-icon{transform:translateY(-2px)}
+.bn-add{width:48px;height:48px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;margin-top:-16px;box-shadow:0 4px 12px rgba(0,0,0,0.15);cursor:pointer;transition:all 0.2s;font-size:22px;color:#fff;font-weight:300}
+.bn-add:active{transform:scale(0.92)}
+
+/* ── ADD TRANSACTION SCREEN ── */
+.add-screen{padding:0 0 90px}
+.add-header{padding:16px 20px 20px;display:flex;align-items:center;gap:12px}
+.back-btn{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:0.5px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text2)}
+.add-title{font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.type-toggle{display:flex;gap:8px;margin:0 20px 20px;background:var(--bg3);border-radius:12px;padding:4px}
+.type-btn{flex:1;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all 0.2s;font-family:'Outfit',sans-serif}
+.type-btn.active-expense{background:rgba(255,95,126,0.15);color:var(--red)}
+.type-btn.active-income{background:rgba(34,211,160,0.15);color:var(--green)}
+.amount-display{margin:0 20px 24px;text-align:center}
+.amt-prefix{font-size:24px;font-weight:400;color:var(--text3);vertical-align:top;margin-top:8px;display:inline-block}
+.amt-input-display{font-size:56px;font-weight:900;letter-spacing:-3px;color:var(--text);outline:none;border:none;background:transparent;width:100%;text-align:center;caret-color:var(--accent);font-family:'Outfit',sans-serif}
+.amt-input-display::placeholder{color:var(--bg4)}
+.form-section{padding:0 20px}
+.field{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;font-family:var(--mono)}
+.field-input{width:100%;background:var(--bg3);border:0.5px solid var(--border2);border-radius:12px;padding:12px 14px;font-size:14px;font-weight:500;color:var(--text);outline:none;font-family:'Outfit',sans-serif;transition:border-color 0.2s}
+.field-input:focus{border-color:var(--accent)}
+.field-input option{background:var(--bg3)}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.cat-chip{padding:10px 4px;border-radius:11px;text-align:center;border:0.5px solid var(--border);background:var(--bg3);cursor:pointer;transition:all 0.2s}
+.cat-chip.sel{border-color:var(--accent);background:rgba(124,106,255,0.12)}
+.cat-chip-ico{font-size:18px;display:block;margin-bottom:3px}
+.cat-chip-lbl{font-size:10px;font-weight:600;color:var(--text3)}
+.cat-chip.sel .cat-chip-lbl{color:var(--accent)}
+.submit-btn{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;letter-spacing:-0.3px;transition:all 0.2s;margin-bottom:8px}
+.submit-btn:active{transform:scale(0.98);opacity:0.9}
+.success-toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-80px);background:#22d3a0;color:#fff;padding:12px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:999;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap}
+.success-toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── ANALYTICS SCREEN ── */
+.analytics-section{padding:0 20px 12px}
+.chart-card{background:var(--bg3);border-radius:16px;padding:16px;border:0.5px solid var(--border2);margin-bottom:12px}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.chart-subtitle{font-size:11px;color:var(--text3);font-weight:400}
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:100px;margin-bottom:8px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px}
+.bar{border-radius:6px 6px 0 0;transition:height 1s cubic-bezier(0.4,0,0.2,1);min-height:4px;width:100%}
+.bar-lbl{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.donut-wrap{position:relative;width:100px;height:100px;margin:0 auto 12px}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+.donut-val{font-size:16px;font-weight:800;letter-spacing:-0.5px}
+.donut-lbl{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* ── BUDGET SCREEN ── */
+.budget-hero{margin:0 20px 16px;background:var(--bg3);border-radius:18px;padding:18px;border:0.5px solid rgba(0,0,0,0.08)}
+.bgt-label{font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.8px;font-family:var(--mono)}
+.bgt-remaining{font-size:32px;font-weight:900;letter-spacing:-1.5px;color:var(--amber);margin-bottom:12px}
+.bgt-track{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;margin-bottom:8px}
+.bgt-fill{height:10px;border-radius:5px;background:var(--accent);transition:width 1s ease}
+.bgt-stats{display:flex;gap:8px}
+.bgt-stat{flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px}
+.bgt-stat-lbl{font-size:10px;color:var(--text3);margin-bottom:3px}
+.bgt-stat-val{font-size:15px;font-weight:700;font-family:var(--mono)}
+
+.alert-card{margin:0 20px 10px;background:var(--bg3);border:0.5px solid rgba(0,0,0,0.08);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.alert-ico{width:36px;height:36px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.alert-info{}
+.alert-title{font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px}
+.alert-desc{font-size:11px;color:var(--text3);line-height:1.5}
+
+.budget-list{margin:0 20px}
+.budget-item{padding:12px 0;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px}
+.bi-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.bi-info{flex:1}
+.bi-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.bi-track{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:3px;overflow:hidden}
+.bi-fill{height:4px;border-radius:2px;transition:width 1s ease}
+.bi-meta{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.bi-pct{font-size:12px;font-weight:700;font-family:var(--mono);min-width:38px;text-align:right}
+
+/* ── REPORTS SCREEN ── */
+.report-card{margin:0 20px 10px;background:var(--bg3);border-radius:16px;padding:16px;border:0.5px solid var(--border2)}
+.rc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.rc-month{font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.rc-badge{font-size:10px;font-family:var(--mono);padding:3px 9px;border-radius:20px;background:rgba(34,211,160,0.15);color:var(--green);border:0.5px solid rgba(34,211,160,0.3)}
+.rc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.rc-stat{background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;text-align:center}
+.rc-stat-lbl{font-size:9px;color:var(--text3);margin-bottom:4px;font-family:var(--mono);text-transform:uppercase}
+.rc-stat-val{font-size:15px;font-weight:800;letter-spacing:-0.5px;font-family:var(--mono)}
+.rc-dl{display:flex;align-items:center;gap:8px;background:rgba(124,106,255,0.08);border:0.5px solid rgba(124,106,255,0.2);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.2s}
+.rc-dl:active{opacity:0.7}
+.rc-dl-ico{font-size:16px}
+.rc-dl-text{font-size:12px;font-weight:700;color:var(--accent);flex:1}
+.rc-dl-arr{font-size:13px;color:var(--accent)}
+
+.weekly-card{margin:0 20px 10px;background:var(--bg3);border-radius:16px;padding:16px;border:0.5px solid var(--border2)}
+.wc-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.wc-ico{width:36px;height:36px;border-radius:10px;background:rgba(77,168,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px}
+.wc-title{font-size:14px;font-weight:700}
+.wc-sub{font-size:11px;color:var(--text3)}
+.week-bars{display:flex;align-items:flex-end;gap:6px;height:60px;margin-bottom:8px}
+.week-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.week-bar{border-radius:4px 4px 0 0;min-height:3px;transition:height 1s ease}
+.week-bar-lbl{font-size:9px;color:var(--text3);font-family:var(--mono)}
+.digest-sent{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-top:8px}
+.digest-check{color:var(--green)}
+
+/* ── ANOMALY SCREEN ── */
+.anomaly-hero{margin:0 20px 16px;background:linear-gradient(135deg,rgba(255,95,126,0.1),rgba(255,181,71,0.05));border-radius:18px;padding:18px;border:0.5px solid rgba(255,95,126,0.25)}
+.ah-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.ah-ico{font-size:28px}
+.ah-title{font-size:16px;font-weight:800}
+.ah-sub{font-size:11px;color:var(--text3)}
+.anomaly-item{margin:0 20px 10px;background:var(--bg3);border-radius:14px;padding:14px;border:0.5px solid var(--border)}
+.an-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.an-cat-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.an-info{flex:1}
+.an-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.an-date{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.an-flag{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:4px;font-weight:600;background:rgba(255,95,126,0.12);color:var(--red);border:0.5px solid rgba(255,95,126,0.3)}
+.an-compare{display:flex;gap:8px;margin-top:4px}
+.an-stat{flex:1;background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px}
+.an-stat-lbl{font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:3px}
+.an-stat-val{font-size:14px;font-weight:700;font-family:var(--mono)}
+.an-bar-wrap{margin-top:8px}
+.an-bar-lbl{font-size:10px;color:var(--text3);margin-bottom:4px}
+.an-bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden}
+.an-bar-fill{height:6px;border-radius:3px;transition:width 1s ease}
+
+/* ── MISC ── */
+.section-gap{height:16px}
+.screen-title{font-size:22px;font-weight:900;letter-spacing:-0.8px;padding:12px 20px 16px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-ico{font-size:48px;margin-bottom:12px}
+.empty-text{font-size:14px;font-weight:600}
+.chip-row{display:flex;gap:6px;overflow-x:auto;padding:0 20px 0;margin-bottom:16px;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text2);white-space:nowrap;cursor:pointer;flex-shrink:0;transition:all 0.2s;font-family:'Outfit',sans-serif}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="statusbar">
+    <div class="sb-time" id="clock">9:41</div>
+    <div class="sb-right">
+      <span>●●●</span><span>WiFi</span><span>🔋</span>
+    </div>
+  </div>
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div id="screen-home" class="screen active">
+    <div class="topheader">
+      <div class="th-left">
+        <div class="th-greeting">Good morning,</div>
+        <div class="th-name">Srinikesh 👋</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="notif-btn" onclick="showScreen('screen-anomaly')">
+          <span>🔔</span>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="th-avatar">SR</div>
+      </div>
+    </div>
+
+    <div class="balance-hero">
+      <div class="bh-glow"></div>
+      <div class="bh-label">Net Savings · March 2026</div>
+      <div class="bh-amount"><span>₹</span>26,320</div>
+      <div class="bh-change">↑ 8.4% from last month</div>
+      <div class="bh-row">
+        <div class="bh-stat">
+          <div class="bh-stat-lbl">Income</div>
+          <div class="bh-stat-val income-val">₹68,500</div>
+        </div>
+        <div class="bh-stat">
+          <div class="bh-stat-lbl">Expenses</div>
+          <div class="bh-stat-val expense-val">₹42,180</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="forecast-section">
+      <div class="section-title">Month Forecast <span class="see-all" onclick="showScreen('screen-analytics')">Details →</span></div>
+      <div class="forecast-card">
+        <div class="fc-top">
+          <div class="fc-label">Predicted spend by Mar 31</div>
+          <div class="fc-pct">78%</div>
+        </div>
+        <div class="fc-bar-track">
+          <div class="fc-bar-fill" style="width:78%"></div>
+        </div>
+        <div class="fc-sub">
+          <div class="fc-spent">Spent: ₹42,180</div>
+          <div class="fc-predicted">Forecast: ₹54,200</div>
+        </div>
+        <div class="anomaly-pill" onclick="showScreen('screen-anomaly')">
+          <div class="anomaly-dot"></div>
+          2 anomalies detected this week
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <div class="section-title">Quick Actions</div>
+      <div class="qa-grid">
+        <div class="qa-item" onclick="showScreen('screen-add')">
+          <div class="qa-icon" style="background:rgba(124,106,255,0.15)">➕</div>
+          <div class="qa-label">Add Txn</div>
+        </div>
+        <div class="qa-item" onclick="showScreen('screen-budget')">
+          <div class="qa-icon" style="background:rgba(255,181,71,0.15)">🎯</div>
+          <div class="qa-label">Budget</div>
+        </div>
+        <div class="qa-item" onclick="showScreen('screen-reports')">
+          <div class="qa-icon" style="background:rgba(34,211,160,0.15)">📄</div>
+          <div class="qa-label">Reports</div>
+        </div>
+        <div class="qa-item" onclick="showScreen('screen-anomaly')">
+          <div class="qa-icon" style="background:rgba(255,95,126,0.15)">🚨</div>
+          <div class="qa-label">Alerts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="forecast-section">
+      <div class="section-title">Recent <span class="see-all" onclick="showScreen('screen-transactions')">See all →</span></div>
+      <div class="txn-list">
+        <div class="txn-item">
+          <div class="txn-ico" style="background:rgba(255,95,126,0.1)">🛍️</div>
+          <div class="txn-info">
+            <div class="txn-name">Amazon Shopping</div>
+            <div class="txn-meta">Shopping · Mar 14</div>
+          </div>
+          <div class="txn-right">
+            <div class="txn-amt neg">-₹2,199</div>
+            <div class="txn-time">2:30 PM</div>
+          </div>
+        </div>
+        <div class="txn-item">
+          <div class="txn-ico" style="background:rgba(34,211,160,0.1)">💼</div>
+          <div class="txn-info">
+            <div class="txn-name">Freelance Payout</div>
+            <div class="txn-meta">Income · Mar 13</div>
+          </div>
+          <div class="txn-right">
+            <div class="txn-amt pos">+₹15,000</div>
+            <div class="txn-time">11:00 AM</div>
+          </div>
+        </div>
+        <div class="txn-item">
+          <div class="txn-ico" style="background:rgba(255,181,71,0.1)">🍕</div>
+          <div class="txn-info">
+            <div class="txn-name">Zomato Order</div>
+            <div class="txn-meta">Food · Mar 12</div>
+          </div>
+          <div class="txn-right">
+            <div class="txn-amt neg">-₹480</div>
+            <div class="txn-time">8:45 PM</div>
+          </div>
+        </div>
+        <div class="txn-item">
+          <div class="txn-ico" style="background:rgba(77,168,255,0.1)">⚡</div>
+          <div class="txn-info">
+            <div class="txn-name">Electricity Bill</div>
+            <div class="txn-meta">Utilities · Mar 11</div>
+          </div>
+          <div class="txn-right">
+            <div class="txn-amt neg">-₹1,240</div>
+            <div class="txn-time">10:15 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TRANSACTIONS ═══ -->
+  <div id="screen-transactions" class="screen">
+    <div class="screen-title">Transactions</div>
+    <div class="chip-row">
+      <div class="chip active">All</div>
+      <div class="chip">Income</div>
+      <div class="chip">Expense</div>
+      <div class="chip">Food</div>
+      <div class="chip">Shopping</div>
+      <div class="chip">Transport</div>
+    </div>
+    <div style="padding:0 20px;margin-bottom:12px">
+      <div style="background:var(--bg3);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;border:0.5px solid var(--border2)">
+        <span style="color:var(--text3)">🔍</span>
+        <input placeholder="Search transactions..." style="background:transparent;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:13px;color:var(--text);flex:1" />
+      </div>
+    </div>
+    <div style="padding:0 20px 6px;font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px">Today, Mar 14</div>
+    <div class="txn-list" style="margin-bottom:12px">
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(255,95,126,0.1)">🛍️</div><div class="txn-info"><div class="txn-name">Amazon Shopping</div><div class="txn-meta">Shopping</div></div><div class="txn-right"><div class="txn-amt neg">-₹2,199</div><div class="txn-time">2:30 PM</div></div></div>
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(255,181,71,0.1)">☕</div><div class="txn-info"><div class="txn-name">Café Coffee Day</div><div class="txn-meta">Food</div></div><div class="txn-right"><div class="txn-amt neg">-₹320</div><div class="txn-time">9:15 AM</div></div></div>
+    </div>
+    <div style="padding:0 20px 6px;font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px">Yesterday, Mar 13</div>
+    <div class="txn-list" style="margin-bottom:12px">
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(34,211,160,0.1)">💼</div><div class="txn-info"><div class="txn-name">Freelance Payout</div><div class="txn-meta">Income</div></div><div class="txn-right"><div class="txn-amt pos">+₹15,000</div><div class="txn-time">11:00 AM</div></div></div>
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(124,106,255,0.1)">🎮</div><div class="txn-info"><div class="txn-name">Steam Purchase</div><div class="txn-meta">Entertainment</div></div><div class="txn-right"><div class="txn-amt neg">-₹1,299</div><div class="txn-time">3:40 PM</div></div></div>
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(255,181,71,0.1)">🍔</div><div class="txn-info"><div class="txn-name">Swiggy Order</div><div class="txn-meta">Food</div></div><div class="txn-right"><div class="txn-amt neg">-₹650</div><div class="txn-time">8:00 PM</div></div></div>
+    </div>
+    <div style="padding:0 20px 6px;font-size:11px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px">Mar 12</div>
+    <div class="txn-list">
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(255,181,71,0.1)">🍕</div><div class="txn-info"><div class="txn-name">Zomato Order</div><div class="txn-meta">Food</div></div><div class="txn-right"><div class="txn-amt neg">-₹480</div><div class="txn-time">8:45 PM</div></div></div>
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(77,168,255,0.1)">🚌</div><div class="txn-info"><div class="txn-name">Ola Ride</div><div class="txn-meta">Transport</div></div><div class="txn-right"><div class="txn-amt neg">-₹220</div><div class="txn-time">6:30 PM</div></div></div>
+      <div class="txn-item"><div class="txn-ico" style="background:rgba(255,95,126,0.1)">🏠</div><div class="txn-info"><div class="txn-name">House Rent</div><div class="txn-meta">Housing · Recurring</div></div><div class="txn-right"><div class="txn-amt neg">-₹14,000</div><div class="txn-time">10:00 AM</div></div></div>
+    </div>
+  </div>
+
+  <!-- ═══ ADD TRANSACTION ═══ -->
+  <div id="screen-add" class="screen add-screen">
+    <div class="add-header">
+      <div class="back-btn" onclick="showScreen('screen-home')">←</div>
+      <div class="add-title">Add Transaction</div>
+    </div>
+    <div class="type-toggle">
+      <button class="type-btn active-expense" id="btnExp" onclick="setType('expense')">Expense</button>
+      <button class="type-btn" id="btnInc" onclick="setType('income')">Income</button>
+    </div>
+    <div class="amount-display">
+      <span class="amt-prefix">₹</span>
+      <input class="amt-input-display" type="number" id="amtInput" placeholder="0" />
+    </div>
+    <div class="form-section">
+      <div class="field">
+        <div class="field-label">Description</div>
+        <input class="field-input" type="text" id="descInput" placeholder="What was this for?" />
+      </div>
+      <div class="field">
+        <div class="field-label">Category</div>
+        <div class="cat-grid" id="catGrid">
+          <div class="cat-chip sel" onclick="selCat(this)"><span class="cat-chip-ico">🏠</span><span class="cat-chip-lbl">Housing</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">🍔</span><span class="cat-chip-lbl">Food</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">🚌</span><span class="cat-chip-lbl">Transport</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">🛍️</span><span class="cat-chip-lbl">Shopping</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">🏥</span><span class="cat-chip-lbl">Health</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">🎮</span><span class="cat-chip-lbl">Entertain</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">💼</span><span class="cat-chip-lbl">Salary</span></div>
+          <div class="cat-chip" onclick="selCat(this)"><span class="cat-chip-ico">📦</span><span class="cat-chip-lbl">Others</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">Date</div>
+        <input class="field-input" type="date" id="dateInput" />
+      </div>
+      <div class="field">
+        <div class="field-label">Note (optional)</div>
+        <input class="field-input" type="text" id="noteInput" placeholder="Add a note..." />
+      </div>
+      <button class="submit-btn" onclick="saveTxn()">Save to Cloud ☁️</button>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYTICS ═══ -->
+  <div id="screen-analytics" class="screen">
+    <div class="screen-title">Analytics</div>
+    <div class="chip-row">
+      <div class="chip active">This Month</div>
+      <div class="chip">3 Months</div>
+      <div class="chip">6 Months</div>
+      <div class="chip">This Year</div>
+    </div>
+    <div class="analytics-section">
+      <div class="chart-card">
+        <div class="chart-title">Monthly Spend Trend <span class="chart-subtitle">6 months</span></div>
+        <div class="bar-chart" id="barChart"></div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Income</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Expense</div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Category Breakdown</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div class="donut-wrap">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#1f1f28" stroke-width="16"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#7c6aff" stroke-width="16" stroke-dasharray="90 148.97" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#ff5f7e" stroke-width="16" stroke-dasharray="62 148.97" stroke-dashoffset="-90" transform="rotate(-90 50 50)"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#ffb547" stroke-width="16" stroke-dasharray="40 148.97" stroke-dashoffset="-152" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="donut-center">
+              <div class="donut-val">₹42k</div>
+              <div class="donut-lbl">total</div>
+            </div>
+          </div>
+          <div class="legend" style="flex:1;flex-direction:column;gap:8px">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--accent);width:10px;height:10px;border-radius:3px"></div><div style="flex:1">Housing</div><div style="font-family:var(--mono);font-size:11px;font-weight:600">₹14,200</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red);width:10px;height:10px;border-radius:3px"></div><div style="flex:1">Food</div><div style="font-family:var(--mono);font-size:11px;font-weight:600">₹9,840</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber);width:10px;height:10px;border-radius:3px"></div><div style="flex:1">Transport</div><div style="font-family:var(--mono);font-size:11px;font-weight:600">₹6,200</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue);width:10px;height:10px;border-radius:3px"></div><div style="flex:1">Others</div><div style="font-family:var(--mono);font-size:11px;font-weight:600">₹11,940</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-title">Savings Rate</div>
+        <div class="bar-chart" id="savingsChart"></div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:16px;padding:16px;border:0.5px solid rgba(124,106,255,0.2);margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(124,106,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px">📈</div>
+          <div>
+            <div style="font-size:13px;font-weight:700">Spend Forecast</div>
+            <div style="font-size:11px;color:var(--text3)">Linear regression · past 3 months</div>
+          </div>
+        </div>
+        <div style="font-size:26px;font-weight:900;letter-spacing:-1px;color:var(--amber);margin-bottom:4px;font-family:var(--mono)">₹54,200</div>
+        <div style="font-size:11px;color:var(--text3)">Predicted month-end spend · based on current rate</div>
+        <div style="margin-top:10px;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden">
+          <div style="height:6px;width:78%;background:linear-gradient(90deg,var(--green),var(--amber));border-radius:3px"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)">
+          <span>₹0</span><span>Budget: ₹60,000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BUDGET ═══ -->
+  <div id="screen-budget" class="screen">
+    <div class="screen-title">Budget & Alerts</div>
+    <div class="budget-hero">
+      <div class="bgt-label">Remaining Budget · March</div>
+      <div class="bgt-remaining">₹17,820</div>
+      <div class="bgt-track">
+        <div class="bgt-fill" id="bgtFill" style="width:70%"></div>
+      </div>
+      <div class="bgt-stats">
+        <div class="bgt-stat">
+          <div class="bgt-stat-lbl">Spent</div>
+          <div class="bgt-stat-val" style="color:var(--red)">₹42,180</div>
+        </div>
+        <div class="bgt-stat">
+          <div class="bgt-stat-lbl">Limit</div>
+          <div class="bgt-stat-val" style="color:var(--text)">₹60,000</div>
+        </div>
+        <div class="bgt-stat">
+          <div class="bgt-stat-lbl">Days left</div>
+          <div class="bgt-stat-val" style="color:var(--blue)">17</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-card">
+      <div class="alert-ico">🚨</div>
+      <div class="alert-info">
+        <div class="alert-title">Transport Budget Alert</div>
+        <div class="alert-desc">₹6,200 spent of ₹7,000 limit — 89% used with 17 days remaining. Cloud Function triggered this alert.</div>
+      </div>
+    </div>
+
+    <div class="forecast-section" style="margin-bottom:0;padding:0 20px 8px">
+      <div class="section-title" style="margin-bottom:8px">Category Budgets</div>
+    </div>
+    <div class="budget-list">
+      <div class="budget-item">
+        <div class="bi-ico" style="background:rgba(255,95,126,0.1)">🏠</div>
+        <div class="bi-info">
+          <div class="bi-name">Housing</div>
+          <div class="bi-track"><div class="bi-fill" style="width:95%;background:var(--amber)"></div></div>
+          <div class="bi-meta">₹14,200 of ₹15,000</div>
+        </div>
+        <div class="bi-pct" style="color:var(--amber)">95%</div>
+      </div>
+      <div class="budget-item">
+        <div class="bi-ico" style="background:rgba(255,181,71,0.1)">🍔</div>
+        <div class="bi-info">
+          <div class="bi-name">Food & Dining</div>
+          <div class="bi-track"><div class="bi-fill" style="width:82%;background:var(--amber)"></div></div>
+          <div class="bi-meta">₹9,840 of ₹12,000</div>
+        </div>
+        <div class="bi-pct" style="color:var(--amber)">82%</div>
+      </div>
+      <div class="budget-item">
+        <div class="bi-ico" style="background:rgba(255,95,126,0.1)">🚌</div>
+        <div class="bi-info">
+          <div class="bi-name">Transport</div>
+          <div class="bi-track"><div class="bi-fill" style="width:89%;background:var(--red)"></div></div>
+          <div class="bi-meta">₹6,200 of ₹7,000</div>
+        </div>
+        <div class="bi-pct" style="color:var(--red)">89%</div>
+      </div>
+      <div class="budget-item">
+        <div class="bi-ico" style="background:rgba(124,106,255,0.1)">🎮</div>
+        <div class="bi-info">
+          <div class="bi-name">Entertainment</div>
+          <div class="bi-track"><div class="bi-fill" style="width:59%;background:var(--accent)"></div></div>
+          <div class="bi-meta">₹2,940 of ₹5,000</div>
+        </div>
+        <div class="bi-pct" style="color:var(--accent)">59%</div>
+      </div>
+      <div class="budget-item">
+        <div class="bi-ico" style="background:rgba(34,211,160,0.1)">🏥</div>
+        <div class="bi-info">
+          <div class="bi-name">Healthcare</div>
+          <div class="bi-track"><div class="bi-fill" style="width:38%;background:var(--green)"></div></div>
+          <div class="bi-meta">₹1,900 of ₹5,000</div>
+        </div>
+        <div class="bi-pct" style="color:var(--green)">38%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORTS ═══ -->
+  <div id="screen-reports" class="screen">
+    <div class="screen-title">Reports</div>
+
+    <div class="weekly-card">
+      <div class="wc-header">
+        <div class="wc-ico">📊</div>
+        <div>
+          <div class="wc-title">Weekly Digest</div>
+          <div class="wc-sub">Mar 10 – Mar 16 · Auto-sent every Sunday</div>
+        </div>
+      </div>
+      <div class="week-bars" id="weekBars"></div>
+      <div style="display:flex;justify-content:space-around;font-size:9px;color:var(--text3);font-family:var(--mono);margin-bottom:10px">
+        <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span><span>SUN</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px">
+        <div><span style="color:var(--text3)">Week total: </span><span style="font-weight:700;font-family:var(--mono);color:var(--red)">₹8,440</span></div>
+        <div><span style="color:var(--text3)">Daily avg: </span><span style="font-weight:700;font-family:var(--mono);color:var(--amber)">₹1,206</span></div>
+      </div>
+      <div class="digest-sent"><span class="digest-check">✓</span> Digest sent to srinikesh@gmail.com · Sun, Mar 16 at 8:00 AM</div>
+    </div>
+
+    <div style="padding:0 20px 8px;font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">Monthly PDF Reports</div>
+
+    <div class="report-card">
+      <div class="rc-top">
+        <div class="rc-month">March 2026</div>
+        <div class="rc-badge">In progress</div>
+      </div>
+      <div class="rc-stats">
+        <div class="rc-stat"><div class="rc-stat-lbl">Income</div><div class="rc-stat-val" style="color:var(--green)">₹68.5k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Spent</div><div class="rc-stat-val" style="color:var(--red)">₹42.2k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Saved</div><div class="rc-stat-val" style="color:var(--accent)">₹26.3k</div></div>
+      </div>
+      <div class="rc-dl" onclick="dlPDF()">
+        <div class="rc-dl-ico">📄</div>
+        <div class="rc-dl-text">Partial report available</div>
+        <div class="rc-dl-arr">↗</div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div class="rc-top">
+        <div class="rc-month">February 2026</div>
+        <div class="rc-badge">✓ Emailed</div>
+      </div>
+      <div class="rc-stats">
+        <div class="rc-stat"><div class="rc-stat-lbl">Income</div><div class="rc-stat-val" style="color:var(--green)">₹63.2k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Spent</div><div class="rc-stat-val" style="color:var(--red)">₹39.4k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Saved</div><div class="rc-stat-val" style="color:var(--accent)">₹23.8k</div></div>
+      </div>
+      <div class="rc-dl" onclick="dlPDF()">
+        <div class="rc-dl-ico">⬇️</div>
+        <div class="rc-dl-text">Download PDF Report</div>
+        <div class="rc-dl-arr">↗</div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div class="rc-top">
+        <div class="rc-month">January 2026</div>
+        <div class="rc-badge">✓ Emailed</div>
+      </div>
+      <div class="rc-stats">
+        <div class="rc-stat"><div class="rc-stat-lbl">Income</div><div class="rc-stat-val" style="color:var(--green)">₹60.0k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Spent</div><div class="rc-stat-val" style="color:var(--red)">₹41.5k</div></div>
+        <div class="rc-stat"><div class="rc-stat-lbl">Saved</div><div class="rc-stat-val" style="color:var(--accent)">₹18.5k</div></div>
+      </div>
+      <div class="rc-dl" onclick="dlPDF()">
+        <div class="rc-dl-ico">⬇️</div>
+        <div class="rc-dl-text">Download PDF Report</div>
+        <div class="rc-dl-arr">↗</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANOMALY ═══ -->
+  <div id="screen-anomaly" class="screen">
+    <div class="screen-title">Anomaly Alerts</div>
+
+    <div class="anomaly-hero">
+      <div class="ah-top">
+        <div class="ah-ico">🔍</div>
+        <div>
+          <div class="ah-title">2 Anomalies Detected</div>
+          <div class="ah-sub">Comparing against your 3-month average per category</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--red);font-family:var(--mono)">2</div>
+          <div style="font-size:10px;color:var(--text3)">This week</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--amber);font-family:var(--mono)">5</div>
+          <div style="font-size:10px;color:var(--text3)">This month</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--accent);font-family:var(--mono)">2×</div>
+          <div style="font-size:10px;color:var(--text3)">Avg threshold</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="anomaly-item">
+      <div class="an-top">
+        <div class="an-cat-ico" style="background:rgba(255,181,71,0.12)">🍔</div>
+        <div class="an-info">
+          <div class="an-name">Zomato — Food Category</div>
+          <div class="an-date">Mar 12, 2026 · 8:45 PM</div>
+        </div>
+        <div class="an-flag">2.5× avg</div>
+      </div>
+      <div class="an-compare">
+        <div class="an-stat">
+          <div class="an-stat-lbl">Transaction</div>
+          <div class="an-stat-val" style="color:var(--red)">₹3,200</div>
+        </div>
+        <div class="an-stat">
+          <div class="an-stat-lbl">Your avg</div>
+          <div class="an-stat-val" style="color:var(--text2)">₹820</div>
+        </div>
+        <div class="an-stat">
+          <div class="an-stat-lbl">Threshold</div>
+          <div class="an-stat-val" style="color:var(--amber)">₹1,640</div>
+        </div>
+      </div>
+      <div class="an-bar-wrap">
+        <div class="an-bar-lbl" style="font-size:10px;color:var(--text3)">Spend vs threshold</div>
+        <div class="an-bar-track">
+          <div class="an-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--amber),var(--red))"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="anomaly-item">
+      <div class="an-top">
+        <div class="an-cat-ico" style="background:rgba(255,95,126,0.12)">🛍️</div>
+        <div class="an-info">
+          <div class="an-name">Amazon — Shopping</div>
+          <div class="an-date">Mar 14, 2026 · 2:30 PM</div>
+        </div>
+        <div class="an-flag">3.1× avg</div>
+      </div>
+      <div class="an-compare">
+        <div class="an-stat">
+          <div class="an-stat-lbl">Transaction</div>
+          <div class="an-stat-val" style="color:var(--red)">₹5,999</div>
+        </div>
+        <div class="an-stat">
+          <div class="an-stat-lbl">Your avg</div>
+          <div class="an-stat-val" style="color:var(--text2)">₹1,200</div>
+        </div>
+        <div class="an-stat">
+          <div class="an-stat-lbl">Threshold</div>
+          <div class="an-stat-val" style="color:var(--amber)">₹2,400</div>
+        </div>
+      </div>
+      <div class="an-bar-wrap">
+        <div class="an-bar-lbl" style="font-size:10px;color:var(--text3)">Spend vs threshold</div>
+        <div class="an-bar-track">
+          <div class="an-bar-fill" style="width:100%;background:linear-gradient(90deg,var(--red),var(--pink))"></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:0 20px;margin-top:4px">
+      <div style="background:var(--bg3);border-radius:14px;padding:14px;border:0.5px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--text2)">How it works</div>
+        <div style="font-size:12px;color:var(--text3);line-height:1.65">The system calculates your <span style="color:var(--text)">average spending per category</span> over the past 3 months. Any transaction exceeding <span style="color:var(--accent)">2× that average</span> triggers this alert automatically via Cloud Function — even when the app is closed.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BOTTOM NAV ═══ -->
+  <div class="bottom-nav">
+    <div class="bn-item active" id="nav-home" onclick="showScreen('screen-home');setNav('nav-home')">
+      <div class="bn-icon">🏠</div>
+      <div class="bn-label">Home</div>
+    </div>
+    <div class="bn-item" id="nav-txn" onclick="showScreen('screen-transactions');setNav('nav-txn')">
+      <div class="bn-icon">📋</div>
+      <div class="bn-label">Transactions</div>
+    </div>
+    <div class="bn-add" onclick="showScreen('screen-add');setNav('')">+</div>
+    <div class="bn-item" id="nav-analytics" onclick="showScreen('screen-analytics');setNav('nav-analytics')">
+      <div class="bn-icon">📊</div>
+      <div class="bn-label">Analytics</div>
+    </div>
+    <div class="bn-item" id="nav-reports" onclick="showScreen('screen-reports');setNav('nav-reports')">
+      <div class="bn-icon">📄</div>
+      <div class="bn-label">Reports</div>
+    </div>
+  </div>
+
+  <div class="success-toast" id="toast">✓ Saved to cloud!</div>
+</div>
+
+<script>
+// Clock
+function updateClock(){
+  const now=new Date();
+  let h=now.getHours(),m=now.getMinutes();
+  document.getElementById('clock').textContent=h+':'+(m<10?'0':'')+m;
+}
+updateClock();setInterval(updateClock,1000);
+
+// Screen navigation
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function setNav(active){
+  document.querySelectorAll('.bn-item').forEach(n=>n.classList.remove('active'));
+  if(active) document.getElementById(active)?.classList.add('active');
+}
+
+// Type toggle
+let currentType='expense';
+function setType(t){
+  currentType=t;
+  const be=document.getElementById('btnExp'),bi=document.getElementById('btnInc');
+  be.className='type-btn '+(t==='expense'?'active-expense':'');
+  bi.className='type-btn '+(t==='income'?'active-income':'');
+}
+
+// Category selection
+function selCat(el){
+  document.querySelectorAll('.cat-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// Save transaction
+function saveTxn(){
+  const amt=document.getElementById('amtInput').value;
+  const desc=document.getElementById('descInput').value;
+  if(!amt||!desc){
+    const t=document.getElementById('toast');
+    t.textContent='⚠️ Fill amount & description';
+    t.style.background='#ff5f7e';
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+    return;
+  }
+  document.getElementById('amtInput').value='';
+  document.getElementById('descInput').value='';
+  document.getElementById('noteInput').value='';
+  const t=document.getElementById('toast');
+  t.textContent='✓ Saved to cloud!';
+  t.style.background='#22d3a0';
+  t.classList.add('show');
+  setTimeout(()=>{t.classList.remove('show');showScreen('screen-home');setNav('nav-home');},2000);
+}
+
+// PDF download toast
+function dlPDF(){
+  const t=document.getElementById('toast');
+  t.textContent='📄 Downloading PDF...';
+  t.style.background='#7c6aff';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// Set today's date
+document.getElementById('dateInput').value=new Date().toISOString().split('T')[0];
+
+// Bar chart — monthly trend
+const months=['Oct','Nov','Dec','Jan','Feb','Mar'];
+const income=[58000,61000,72000,65000,63200,68500];
+const expense=[41000,43500,55000,40200,39440,42180];
+const maxVal=Math.max(...income,...expense);
+const bc=document.getElementById('barChart');
+months.forEach((m,i)=>{
+  bc.innerHTML+=`<div class="bar-wrap">
+    <div class="bar" style="height:${Math.round(income[i]/maxVal*90)}px;background:rgba(124,106,255,0.7)"></div>
+    <div class="bar" style="height:${Math.round(expense[i]/maxVal*90)}px;background:rgba(255,95,126,0.7)"></div>
+    <div class="bar-lbl">${m}</div>
+  </div>`;
+});
+
+// Savings rate chart
+const savings=[29,28,24,38,38,38];
+const maxS=50;
+const sc=document.getElementById('savingsChart');
+months.forEach((m,i)=>{
+  sc.innerHTML+=`<div class="bar-wrap">
+    <div class="bar" style="height:${Math.round(savings[i]/maxS*90)}px;background:rgba(34,211,160,${0.4+savings[i]/100})"></div>
+    <div class="bar-lbl">${m}</div>
+  </div>`;
+});
+
+// Weekly bars
+const weekData=[1200,800,2400,600,1800,1400,240];
+const maxW=Math.max(...weekData);
+const wb=document.getElementById('weekBars');
+['M','T','W','T','F','S','S'].forEach((d,i)=>{
+  wb.innerHTML+=`<div class="week-bar-wrap">
+    <div class="week-bar" style="height:${Math.round(weekData[i]/maxW*55)}px;width:100%;background:${i===6?'rgba(124,106,255,0.4)':'rgba(124,106,255,0.65)'}"></div>
+  </div>`;
+});
+</script>
+</body>
+</html>
