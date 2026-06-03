@@ -1,0 +1,31 @@
+{
+  "functions": {
+    "source": "expensecloud-backend/functions",
+    "runtime": "nodejs18",
+    "timeoutSeconds": 540,
+    "memory": "512MB",
+    "environmentVariables": {
+      "ENABLE_ANOMALY_ALERTS": "true",
+      "ENABLE_WEEKLY_DIGEST": "true",
+      "ENABLE_MONTHLY_REPORT": "true"
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/expensecloud-integrated.html"
+      }
+    ]
+  }
+}

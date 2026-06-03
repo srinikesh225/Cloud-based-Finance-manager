@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // USER RULES
+    // ============================================
+    match /users/{userId} {
+      // Users can read/write their own data
+      allow read, write: if request.auth.uid == userId;
+      
+      // ============================================
+      // TRANSACTIONS SUBCOLLECTION
+      // ============================================
+      match /expenses/{transactionId} {
+        allow read, write: if request.auth.uid == userId;
+        
+        // Validate transaction data
+        allow create: if isValidTransaction(request.resource.data);
+        allow update: if isValidTransaction(request.resource.data);
+      }
+      
+      // ============================================
+      // ALERTS SUBCOLLECTION
+      // ============================================
+      match /alerts/{alertId} {
+        // Users can read their alerts
+        allow read: if request.auth.uid == userId;
+        
+        // Only Cloud Functions can write
+        allow write: if request.auth.uid == null;
+      }
+      
+      // ============================================
+      // NOTIFICATION PREFERENCES SUBCOLLECTION
+      // ============================================
+      match /notificationPreferences/{document=**} {
+        allow read, write: if request.auth.uid == userId;
+      }
+    }
+    
+    // ============================================
+    // ADMIN RULES (for monitoring)
+    // ============================================
+    match /admin/{document=**} {
+      allow read, write: if isAdmin();
+    }
+    
+    // ============================================
+    // AUDIT LOGS (for Cloud Functions)
+    // ============================================
+    match /auditLogs/{logId} {
+      // Only Cloud Functions can write
+      allow write: if request.auth.uid == null;
+      // Only admins can read
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // EMAIL QUEUE (for Cloud Functions)
+    // ============================================
+    match /emailQueue/{emailId} {
+      // Only Cloud Functions can write
+      allow write: if request.auth.uid == null;
+      // Only admins can read
+      allow read: if isAdmin();
+    }
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Validate transaction data structure
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['amount', 'category', 'date', 'description', 'type'])
+        && data.amount > 0
+        && data.amount < 10000000
+        && data.type in ['expense', 'income']
+        && data.category is string
+        && data.description is string
+        && data.date is timestamp;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+  }
+}
