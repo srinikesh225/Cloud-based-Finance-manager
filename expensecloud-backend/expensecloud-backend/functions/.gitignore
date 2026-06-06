@@ -1,0 +1,33 @@
+# Local environment variables (contains API keys and secrets)
+.env
+.env.local
+.env.*.local
+
+# Node modules
+node_modules/
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase
+.runtimeconfig.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dependencies
+npm-shrinkwrap.json
+
+# Build output
+lib/
+dist/

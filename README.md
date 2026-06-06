@@ -49,7 +49,32 @@
 - Category-wise breakdown
 - Savings rate analysis
 
-### **4. User-Friendly Interface**
+### **4. Payment Method Tracking** 💳
+Track expenses by payment method:
+- 🏦 **Debit/Credit Card** — Track all card transactions
+- 📱 **UPI** — Google Pay, PhonePe, Paytm support
+- 🏪 **Bank Transfer** — Direct bank account transfers
+- 💵 **Cash** — Manual cash expense tracking
+- 👛 **Digital Wallets** — Amazon Pay, Apple Pay, etc.
+- 🌐 **Net Banking** — Online bank transfers
+- 📄 **Cheque** — Corporate cheque payments
+- ₿ **Cryptocurrency** — Bitcoin, Ethereum tracking
+
+**Analytics by Payment Method:**
+- Total spent per payment method
+- Payment method trends
+- Most used payment method
+- Payment method-wise category breakdown
+
+### **5. Modern Authentication (Clerk)** 🔐
+- Social OAuth login (Google, GitHub, Microsoft, Apple, etc.)
+- Email/password authentication
+- Multi-Factor Authentication (MFA)
+- User profile management
+- Session management
+- Beautiful pre-built UI components
+
+### **6. User-Friendly Interface**
 - Sidebar navigation menu
 - Search functionality
 - Add transaction floating button

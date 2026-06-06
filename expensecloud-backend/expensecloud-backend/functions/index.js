@@ -1,12 +1,15 @@
 // ============================================================
-//  ExpenseCloud — Cloud Functions  (40% complete)
-//  Implemented:  Auth trigger, Budget Alert, Anomaly Detection
-//  TODO (60%):   Spend Forecasting, Weekly Digest,
-//                Monthly PDF Report, Recurring Tx Detection
+//  ExpenseCloud — Cloud Functions  (100% complete)
+//  Auth trigger, Budget Alert, Anomaly Detection,
+//  Spend Forecasting, Weekly Behavioral Digest,
+//  Monthly PDF Report (email), Recurring Tx Detection
 // ============================================================
 
 const functions = require("firebase-functions");
 const admin     = require("firebase-admin");
+const { sendAnomalyAlertEmail, getUserEmailFromClerk: getEmailFromClerkAnomaly } = require("./anomaly-alert");
+const { sendWeeklyDigestEmail, sendBudgetAlertEmail, getUserEmailFromClerk: getEmailFromClerkDigest } = require("./weekly-digest");
+const { generateAndEmailMonthlyReport } = require("./monthly-report");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -99,6 +102,7 @@ exports.checkBudgetAlert = functions.firestore
       if (totalExpense > budgetLimit) {
         const overshoot = totalExpense - budgetLimit;
 
+        // Send FCM push notification
         await admin.messaging().send({
           token: fcmToken,
           notification: {
@@ -116,6 +120,24 @@ exports.checkBudgetAlert = functions.firestore
         });
 
         console.log(`🔔 Budget alert sent to ${userId}`);
+
+        // ── Send email notification via Clerk ──
+        const userEmail = userDoc.data().email;
+        if (userEmail) {
+          try {
+            const percentOver = Math.round((overshoot / budgetLimit) * 100);
+            await sendBudgetAlertEmail(userId, userEmail, {
+              totalSpent: totalExpense,
+              budgetLimit: budgetLimit,
+              overshoot: overshoot,
+              percentOver: percentOver
+            });
+            console.log(`📧 Budget alert email sent to ${userEmail}`);
+          } catch (emailErr) {
+            console.error(`⚠️  Failed to send budget email: ${emailErr.message}`);
+            // Continue even if email fails, push notification was sent
+          }
+        }
       }
 
       return null;
@@ -228,6 +250,24 @@ exports.detectAnomaly = functions.firestore
           });
 
           console.log(`🔔 Anomaly alert sent — ${category} ${fmt(amount)} (${multiplierActual}× avg)`);
+
+          // ── Send email notification via Clerk ──
+          const userEmail = userDoc.data().email;
+          if (userEmail) {
+            try {
+              await sendAnomalyAlertEmail(userId, userEmail, {
+                category: category,
+                amount: amount,
+                average: Math.round(average),
+                multiplier: multiplierActual,
+                description: description
+              });
+              console.log(`📧 Anomaly alert email sent to ${userEmail}`);
+            } catch (emailErr) {
+              console.error(`⚠️  Failed to send anomaly email: ${emailErr.message}`);
+              // Continue even if email fails, push notification was sent
+            }
+          }
         }
       }
 
@@ -350,7 +390,7 @@ exports.sendWeeklyDigest = functions.pubsub
 
       for (const userDoc of usersSnapshot.docs) {
         const uid = userDoc.id;
-        const { displayName, fcmToken } = userDoc.data();
+        const { displayName, fcmToken, email } = userDoc.data();
 
         const settingsDoc = await db
           .collection("users")
@@ -360,7 +400,6 @@ exports.sendWeeklyDigest = functions.pubsub
           .get();
 
         if (!settingsDoc.exists || !settingsDoc.data().weeklyDigest) continue;
-        if (!fcmToken) continue;
 
         // Get this week's transactions
         const now = new Date();
@@ -377,6 +416,7 @@ exports.sendWeeklyDigest = functions.pubsub
         let weekIncome = 0,
           weekExpense = 0;
         const categories = {};
+        const categoryTransactions = {};
 
         txnSnap.forEach((doc) => {
           const tx = doc.data();
@@ -385,33 +425,88 @@ exports.sendWeeklyDigest = functions.pubsub
           } else {
             weekExpense += tx.amount;
             categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
+            if (!categoryTransactions[tx.category]) {
+              categoryTransactions[tx.category] = 0;
+            }
+            categoryTransactions[tx.category]++;
           }
         });
 
-        const topCategory = Object.entries(categories).sort(([, a], [, b]) => b - a)[0];
+        const topCategories = Object.entries(categories)
+          .map(([category, amount]) => ({
+            category,
+            amount,
+            count: categoryTransactions[category]
+          }))
+          .sort((a, b) => b.amount - a.amount)
+          .slice(0, 5);
 
-        const body = `Income: ${fmt(weekIncome)} | Expense: ${fmt(weekExpense)} | Saved: ${fmt(weekIncome - weekExpense)}${
-          topCategory ? ` | Top: ${topCategory[0]}` : ""
-        }`;
+        const lastWeekEnd = new Date(startOfWeek);
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+        const lastWeekStart = new Date(lastWeekEnd);
+        lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
 
-        await admin.messaging().send({
-          token: fcmToken,
-          notification: {
-            title: "📊 Your Weekly Summary",
-            body,
-          },
-          data: {
-            screen: "transactions",
-            weekIncome: String(Math.round(weekIncome)),
-            weekExpense: String(Math.round(weekExpense)),
-          },
-          android: {
-            priority: "high",
-            notification: { channelId: "weekly_digest" },
-          },
+        const lastWeekTxnSnap = await db
+          .collection("users")
+          .doc(uid)
+          .collection("transactions")
+          .where("type", "==", "expense")
+          .where("date", ">=", admin.firestore.Timestamp.fromDate(lastWeekStart))
+          .where("date", "<=", admin.firestore.Timestamp.fromDate(lastWeekEnd))
+          .get();
+
+        let lastWeekExpense = 0;
+        lastWeekTxnSnap.forEach((doc) => {
+          lastWeekExpense += doc.data().amount || 0;
         });
 
-        console.log(`✅ Weekly digest sent to ${uid}`);
+        const trend = lastWeekExpense > 0 ? ((weekExpense - lastWeekExpense) / lastWeekExpense) * 100 : 0;
+
+        // Send FCM push notification if token exists
+        if (fcmToken) {
+          const body = `Income: ${fmt(weekIncome)} | Expense: ${fmt(weekExpense)} | Saved: ${fmt(weekIncome - weekExpense)}${
+            topCategories.length > 0 ? ` | Top: ${topCategories[0].category}` : ""
+          }`;
+
+          await admin.messaging().send({
+            token: fcmToken,
+            notification: {
+              title: "📊 Your Weekly Summary",
+              body,
+            },
+            data: {
+              screen: "transactions",
+              weekIncome: String(Math.round(weekIncome)),
+              weekExpense: String(Math.round(weekExpense)),
+            },
+            android: {
+              priority: "high",
+              notification: { channelId: "weekly_digest" },
+            },
+          });
+
+          console.log(`✅ Weekly digest push sent to ${uid}`);
+        }
+
+        // ── Send email notification via Clerk (with behavioral insights) ──
+        if (email) {
+          try {
+            const weekEnding = now.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+            const { budgetLimit: bl } = userDoc.data();
+            await sendWeeklyDigestEmail(uid, email, {
+              totalSpent:    weekExpense,
+              avgDaily:      Math.round(weekExpense / 7),
+              topCategories: topCategories,
+              trend:         trend,
+              weekEnding:    weekEnding,
+              budgetLimit:   bl || 50000,
+            });
+            console.log(`📧 Weekly digest email sent to ${email}`);
+          } catch (emailErr) {
+            console.error(`⚠️  Failed to send weekly digest email: ${emailErr.message}`);
+            // Continue even if email fails, push notification was sent
+          }
+        }
       }
     } catch (err) {
       console.error("❌ sendWeeklyDigest failed:", err);
@@ -465,9 +560,10 @@ exports.generateMonthlyReport = functions.pubsub
           }
         });
 
-        const savings = totalIncome - totalExpense;
+        const savings          = totalIncome - totalExpense;
+        const budgetUtilization = Math.round((totalExpense / (budgetLimit || 50000)) * 100);
 
-        // Store report summary in Firestore (client can generate PDF if needed)
+        // ── Store report summary in Firestore ──
         const reportMonth = monthStart.toLocaleString("en-IN", { month: "long", year: "numeric" });
         await db
           .collection("users")
@@ -479,13 +575,48 @@ exports.generateMonthlyReport = functions.pubsub
             totalExpense,
             savings,
             categoryWise,
-            budgetUtilization: Math.round((totalExpense / budgetLimit) * 100),
+            budgetUtilization,
             generatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
 
         console.log(
-          `✅ Report generated for ${uid}: ${reportMonth} — Income: ${fmt(totalIncome)}, Expense: ${fmt(totalExpense)}`
+          `✅ Report stored for ${uid}: ${reportMonth} — Income: ${fmt(totalIncome)}, Expense: ${fmt(totalExpense)}`
         );
+
+        // ── Fetch anomalous transactions for this month ──
+        const anomalySnap = await db
+          .collection("users").doc(uid)
+          .collection("transactions")
+          .where("isAnomalous", "==", true)
+          .where("date", ">=", admin.firestore.Timestamp.fromDate(monthStart))
+          .where("date", "<=", admin.firestore.Timestamp.fromDate(monthEnd))
+          .get();
+
+        const anomalies = anomalySnap.docs.map((d) => ({
+          ...d.data(),
+          date: d.data().date,
+        }));
+
+        // ── Generate + email PDF report ──
+        if (email) {
+          try {
+            await generateAndEmailMonthlyReport(uid, email, {
+              displayName:      displayName || email.split("@")[0],
+              monthLabel:       reportMonth,
+              totalIncome,
+              totalExpense,
+              savings,
+              budgetLimit:      budgetLimit || 50000,
+              budgetUtilization,
+              categoryWise,
+              anomalies,
+            });
+            console.log(`📧 Monthly PDF report emailed to ${email} for ${reportMonth}`);
+          } catch (pdfErr) {
+            console.error(`⚠️  Failed to send monthly PDF report: ${pdfErr.message}`);
+            // Continue — Firestore data is already stored
+          }
+        }
       }
     } catch (err) {
       console.error("❌ generateMonthlyReport failed:", err);
@@ -666,4 +797,4 @@ exports.getSmartInsights = functions.https.onCall(async (data, context) => {
   }
 });
 
-console.log("✅ All Cloud Functions loaded (100% complete)!");
+console.log("✅ All Cloud Functions loaded — Weekly Digest + Monthly PDF Report active!");

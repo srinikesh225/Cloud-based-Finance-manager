@@ -10,7 +10,9 @@
   "emulators": {
     "auth": { "port": 9099 },
     "firestore": { "port": 8080 },
-    "functions": { "port": 5001 },
-    "ui": { "enabled": true, "port": 4000 }
+    "functions": { "port": 5002 },
+    "ui": { "enabled": true, "port": 4001 },
+    "hub": { "port": 4402 },
+    "logging": { "port": 4502 }
   }
 }

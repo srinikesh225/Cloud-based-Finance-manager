@@ -10,25 +10,27 @@
 
 ```
 IT Project/
-├── 📄 INDEX.md                    ← You are here!
-├── 📘 README.md                   ← Full documentation (13 KB)
-├── 🚀 QUICK_START.md             ← 15-minute setup guide (7 KB)
-├── 📊 PROJECT_SUMMARY.md         ← Feature overview (11 KB)
-├── 🔧 TECHNICAL_SPECS.md         ← Architecture & specs (15 KB)
-├── 💻 expensecloud-frontend.html ← Web app (40 KB) ✨ OPEN THIS!
-├── 🐚 deploy.sh                  ← Setup script (Linux/Mac)
-├── 🪟 deploy.bat                 ← Setup script (Windows)
-├── .vscode/                      ← VS Code settings
+├── 📄 INDEX.md                              ← You are here!
+├── 📘 README.md                             ← Full documentation (13 KB)
+├── 🚀 QUICK_START.md                       ← 15-minute setup guide (7 KB)
+├── 📊 PROJECT_SUMMARY.md                   ← Feature overview (11 KB)
+├── 🔧 TECHNICAL_SPECS.md                   ← Architecture & specs (15 KB)
+├── 💳 PAYMENT_METHODS_GUIDE.md             ← Payment tracking guide (NEW!)
+├── 🔐 CLERK_INTEGRATION.md                 ← Authentication setup (NEW!)
+├── 💻 expensecloud-frontend.html           ← Web app (40 KB) ✨ OPEN THIS!
+├── 🐚 deploy.sh                            ← Setup script (Linux/Mac)
+├── 🪟 deploy.bat                           ← Setup script (Windows)
+├── .vscode/                                ← VS Code settings
 └── expensecloud-backend/
     └── expensecloud-backend/
         ├── functions/
-        │   ├── index.js          ← 9 Cloud Functions (100% complete)
-        │   └── package.json      ← Dependencies
-        ├── firebaseConfig.js     ← Firebase config template
-        ├── firestore.rules       ← Security rules
-        ├── firestore.indexes.json← Database indexes
-        ├── firebase.json         ← Firebase project config
-        └── README.md             ← Backend docs
+        │   ├── index.js                    ← 9 Cloud Functions (100% complete)
+        │   └── package.json                ← Dependencies
+        ├── firebaseConfig.js               ← Firebase config template
+        ├── firestore.rules                 ← Security rules
+        ├── firestore.indexes.json          ← Database indexes
+        ├── firebase.json                   ← Firebase project config
+        └── README.md                       ← Backend docs
 ```
 
 ---
@@ -42,6 +44,8 @@ IT Project/
 | **Full docs** | README.md | 10 min |
 | **Project overview** | PROJECT_SUMMARY.md | 5 min |
 | **Technical deep dive** | TECHNICAL_SPECS.md | 20 min |
+| **Payment methods** | PAYMENT_METHODS_GUIDE.md | 10 min |
+| **Clerk authentication** | CLERK_INTEGRATION.md | 15 min |
 | **Auto deployment** | deploy.sh / deploy.bat | 10 min |
 
 ---
