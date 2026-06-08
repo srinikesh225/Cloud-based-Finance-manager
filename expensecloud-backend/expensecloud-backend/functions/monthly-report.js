@@ -17,13 +17,24 @@ const { Clerk }   = require('@clerk/clerk-sdk-node');
 const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 // ── Nodemailer transporter ──
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const transporter = nodemailer.createTransport(
+  process.env.EMAIL_HOST 
+    ? {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+    : {
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+);
 
 // ── Rupee formatter ──
 const fmt = (n) => `Rs.${Number(n || 0).toLocaleString('en-IN')}`;

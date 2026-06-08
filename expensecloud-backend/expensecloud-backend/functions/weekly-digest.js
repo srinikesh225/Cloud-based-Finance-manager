@@ -15,13 +15,24 @@ const nodemailer  = require('nodemailer');
 const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 // ── Nodemailer transporter (Gmail) ──
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const transporter = nodemailer.createTransport(
+  process.env.EMAIL_HOST 
+    ? {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+    : {
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+);
 
 // ── Formatters ──
 const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;

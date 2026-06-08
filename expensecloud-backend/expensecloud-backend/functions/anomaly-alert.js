@@ -11,13 +11,24 @@ const nodemailer = require('nodemailer');
 const clerk = new Clerk({ secretKey: process.env.CLERK_SECRET_KEY });
 
 // Configure email transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',  // or your email service
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const transporter = nodemailer.createTransport(
+  process.env.EMAIL_HOST 
+    ? {
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+    : {
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD,
+        },
+      }
+);
 
 // ─────────────────────────────────────────────────────────────
 //  HELPER: format Indian Rupees

@@ -6,9 +6,8 @@
     <meta name="description" content="Manage your personal and business expenses with ExpenseCloud. Live synchronization, smart budgets, and anomaly detection.">
     <title>ExpenseCloud — Smart Finance Manager</title>
     <!-- Reports & Email Integration Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.autotable.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 
@@ -1003,6 +1002,26 @@
             color: var(--success);
         }
 
+        .pm-filter-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pm-filter-btn:hover {
+            color: var(--text-primary);
+        }
+        .pm-filter-btn.active {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
         /* MODAL */
         .modal {
             display: none;
@@ -1335,6 +1354,15 @@
                         </a>
                     </li>
                     <li class="menu-item">
+                        <a class="menu-link" onclick="showScreen('paymentModes')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                            <span>Payment Modes</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
                         <a class="menu-link" onclick="showScreen('settings')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="3" />
@@ -1381,6 +1409,13 @@
                         <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
                     </svg>
                     <span>Reports</span>
+                </a>
+                <a class="bottom-nav-link" onclick="showScreen('paymentModes')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span>Payments</span>
                 </a>
                 <a class="bottom-nav-link" onclick="showScreen('settings')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1534,21 +1569,6 @@
                             </div>
                         </div>
 
-                        <!-- SECTION 2: MONTHLY REPORT -->
-                        <div class="report-section">
-                            <div class="report-header">
-                                <div class="report-title">📄 Monthly Financial PDF Report</div>
-                                <span style="font-size: 12px; color: var(--text-secondary);" id="monthlyReportDate">Current Month</span>
-                            </div>
-                            <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
-                                Generate and download a comprehensive multi-page PDF financial statement. Includes income vs expense breakdown, category limits progress, anomalies, and personalized budget recommendations.
-                            </p>
-                            <div class="report-actions">
-                                <button class="btn btn-primary" onclick="downloadMonthlyReport()">📥 Download PDF Report</button>
-                                <button class="btn btn-secondary" onclick="emailMonthlyReport()" id="btnEmailMonthlyReport">📧 Email PDF Report</button>
-                            </div>
-                        </div>
-
                         <!-- SECTION 3: EMAIL CONFIGURATION (EMAILJS) -->
                         <div class="report-section">
                             <div class="report-header">
@@ -1605,6 +1625,108 @@
                             <div style="display: flex; gap: 12px;">
                                 <button class="btn btn-primary" onclick="saveCategoryLimits()">💾 Save Limits</button>
                                 <button class="btn btn-secondary" onclick="resetCategoryLimits()">🔄 Reset Default</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PAYMENT MODES SCREEN -->
+                    <div id="paymentModes" class="screen">
+                        <div class="section" style="padding: 0; background: transparent; border: none; box-shadow: none;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <h2 style="font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 700;">Payment Mode Analytics 💳</h2>
+                                <p style="font-size: 13px; color: var(--text-secondary);">Track spending by payment methods</p>
+                            </div>
+                            
+                            <div class="dashboard-grid" style="grid-template-columns: repeat(3, 1fr);">
+                                <!-- Card -->
+                                <div class="card" style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">💳</div>
+                                    <p class="card-label">Credit/Debit Card</p>
+                                    <div class="card-value value-savings" id="pmTotalCard">₹0</div>
+                                    <div class="card-subtext" style="justify-content: center;" id="pmCountCard">This month | 0 transactions</div>
+                                    <div style="margin-top: 10px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; display: inline-block;" id="pmPercentCard">0%</div>
+                                </div>
+                                <!-- UPI -->
+                                <div class="card" style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">📱</div>
+                                    <p class="card-label">UPI</p>
+                                    <div class="card-value" style="color: var(--warning);" id="pmTotalUPI">₹0</div>
+                                    <div class="card-subtext" style="justify-content: center;" id="pmCountUPI">This month | 0 transactions</div>
+                                    <div style="margin-top: 10px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; display: inline-block;" id="pmPercentUPI">0%</div>
+                                </div>
+                                <!-- Cash & Other -->
+                                <div class="card" style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">💵</div>
+                                    <p class="card-label">Cash & Other</p>
+                                    <div class="card-value value-income" id="pmTotalCash">₹0</div>
+                                    <div class="card-subtext" style="justify-content: center;" id="pmCountCash">This month | 0 transactions</div>
+                                    <div style="margin-top: 10px; background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; display: inline-block;" id="pmPercentCash">0%</div>
+                                </div>
+                            </div>
+
+                            <div class="setup-grid" style="margin-bottom: 24px;">
+                                <div class="card">
+                                    <h3 class="section-title">Payment Distribution (This Month)</h3>
+                                    <div style="position: relative; height: 220px; width: 100%; display: flex; justify-content: center;">
+                                        <canvas id="paymentDonutChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="card">
+                                    <h3 class="section-title">6-Month Payment Mode Trend</h3>
+                                    <div style="position: relative; height: 220px; width: 100%;">
+                                        <canvas id="paymentBarChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <h3 class="section-title">Payment Mode Insights</h3>
+                                <div class="dashboard-grid" style="gap: 16px;">
+                                    <div class="card" style="padding: 16px; text-align: center;">
+                                        <p class="card-label" style="font-size: 10px;">AVG CARD TRANS</p>
+                                        <div class="card-value" style="font-size: 20px; margin-bottom: 4px;" id="pmAvgCard">₹0</div>
+                                    </div>
+                                    <div class="card" style="padding: 16px; text-align: center;">
+                                        <p class="card-label" style="font-size: 10px;">AVG UPI TRANS</p>
+                                        <div class="card-value" style="font-size: 20px; margin-bottom: 4px;" id="pmAvgUPI">₹0</div>
+                                    </div>
+                                    <div class="card" style="padding: 16px; text-align: center;">
+                                        <p class="card-label" style="font-size: 10px;">MOST USED</p>
+                                        <div class="card-value" style="font-size: 20px; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;" id="pmMostUsed"><span style="font-size: 18px;" id="pmMostUsedIcon">💳</span> <span id="pmMostUsedText">None</span></div>
+                                    </div>
+                                    <div class="card" style="padding: 16px; text-align: center;">
+                                        <p class="card-label" style="font-size: 10px;">TOTAL TRANSACTIONS</p>
+                                        <div class="card-value" style="font-size: 20px; margin-bottom: 4px;" id="pmTotalCount">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="section">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 class="section-title" style="margin: 0;">Recent Transactions by Payment Mode</h3>
+                                    <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px;" id="pmFilters">
+                                        <button class="pm-filter-btn active" data-filter="All" onclick="filterPaymentMode('All')">All</button>
+                                        <button class="pm-filter-btn" data-filter="Card" onclick="filterPaymentMode('Card')">💳 Card</button>
+                                        <button class="pm-filter-btn" data-filter="UPI" onclick="filterPaymentMode('UPI')">📱 UPI</button>
+                                        <button class="pm-filter-btn" data-filter="Cash" onclick="filterPaymentMode('Cash')">💵 Cash</button>
+                                    </div>
+                                </div>
+                                <div style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                                        <thead>
+                                            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary); font-size: 11px; text-transform: uppercase;">
+                                                <th style="padding: 12px;">Date</th>
+                                                <th style="padding: 12px;">Description</th>
+                                                <th style="padding: 12px;">Category</th>
+                                                <th style="padding: 12px;">Payment Mode</th>
+                                                <th style="padding: 12px; text-align: right;">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pmTransactionsList">
+                                            <tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">Loading...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1980,13 +2102,223 @@
                 displayTransactions(transactions);
                 updateAnalytics(transactions);
                 updateDigest(transactions);
-                updateMonthlyReportDetails(transactions);
+                updatePaymentModesScreen(transactions);
             }, (error) => {
                 console.error('Error loading transactions:', error);
             });
         }
 
 
+
+        // ============ PAYMENT MODES ANALYTICS ============
+        let paymentDonutChartInstance = null;
+        let paymentBarChartInstance = null;
+
+        function updatePaymentModesScreen(transactions) {
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            let cardTotal = 0, upiTotal = 0, cashTotal = 0;
+            let cardCount = 0, upiCount = 0, cashCount = 0;
+            let totalMonthSpend = 0;
+
+            // Trend mapping over 6 months
+            const months = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({
+                    label: d.toLocaleDateString('en-IN', { month: 'short' }),
+                    year: d.getFullYear(),
+                    month: d.getMonth(),
+                    card: 0, upi: 0, cash: 0
+                });
+            }
+
+            transactions.forEach(tx => {
+                if (tx.type !== 'expense') return;
+                
+                const txDate = tx.date?.toDate?.() || new Date(tx.date);
+                const amt = tx.amount || 0;
+                
+                // Grouping
+                const pm = tx.paymentMethod || 'Other';
+                let group = 'Cash';
+                if (pm.includes('Card')) group = 'Card';
+                else if (pm.includes('UPI') || pm.includes('Wallet')) group = 'UPI'; // Included Wallet in UPI per screenshot logic maybe
+
+                // Current month stats
+                if (txDate >= monthStart) {
+                    totalMonthSpend += amt;
+                    if (group === 'Card') { cardTotal += amt; cardCount++; }
+                    else if (group === 'UPI') { upiTotal += amt; upiCount++; }
+                    else { cashTotal += amt; cashCount++; }
+                }
+
+                // 6-month historical stats
+                const mIdx = months.findIndex(m => m.year === txDate.getFullYear() && m.month === txDate.getMonth());
+                if (mIdx !== -1) {
+                    if (group === 'Card') months[mIdx].card += amt;
+                    else if (group === 'UPI') months[mIdx].upi += amt;
+                    else months[mIdx].cash += amt;
+                }
+            });
+
+            const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+            const pct = (part, total) => total > 0 ? ((part / total) * 100).toFixed(1) : 0;
+
+            // Update Cards
+            document.getElementById('pmTotalCard').textContent = fmt(cardTotal);
+            document.getElementById('pmCountCard').textContent = `This month | ${cardCount} transactions`;
+            document.getElementById('pmPercentCard').textContent = `${pct(cardTotal, totalMonthSpend)}%`;
+
+            document.getElementById('pmTotalUPI').textContent = fmt(upiTotal);
+            document.getElementById('pmCountUPI').textContent = `This month | ${upiCount} transactions`;
+            document.getElementById('pmPercentUPI').textContent = `${pct(upiTotal, totalMonthSpend)}%`;
+
+            document.getElementById('pmTotalCash').textContent = fmt(cashTotal);
+            document.getElementById('pmCountCash').textContent = `This month | ${cashCount} transactions`;
+            document.getElementById('pmPercentCash').textContent = `${pct(cashTotal, totalMonthSpend)}%`;
+
+            // Insights
+            document.getElementById('pmAvgCard').textContent = fmt(cardCount > 0 ? cardTotal / cardCount : 0);
+            document.getElementById('pmAvgUPI').textContent = fmt(upiCount > 0 ? upiTotal / upiCount : 0);
+            document.getElementById('pmTotalCount').textContent = cardCount + upiCount + cashCount;
+            
+            let mostUsed = 'None', mostUsedIcon = '💳';
+            if (cardCount >= upiCount && cardCount >= cashCount && cardCount > 0) { mostUsed = 'Card'; mostUsedIcon = '💳'; }
+            else if (upiCount > cardCount && upiCount >= cashCount) { mostUsed = 'UPI'; mostUsedIcon = '📱'; }
+            else if (cashCount > cardCount && cashCount > upiCount) { mostUsed = 'Cash'; mostUsedIcon = '💵'; }
+            document.getElementById('pmMostUsedText').textContent = mostUsed;
+            document.getElementById('pmMostUsedIcon').textContent = mostUsedIcon;
+
+            // Render Charts
+            renderPaymentCharts(cardTotal, upiTotal, cashTotal, months);
+            
+            // Re-apply current filter
+            const activeFilterBtn = document.querySelector('.pm-filter-btn.active');
+            filterPaymentMode(activeFilterBtn ? activeFilterBtn.getAttribute('data-filter') : 'All');
+        }
+
+        function renderPaymentCharts(cardTotal, upiTotal, cashTotal, monthsData) {
+            if (typeof Chart === 'undefined') return;
+
+            // Donut Chart
+            const donutCtx = document.getElementById('paymentDonutChart');
+            if (donutCtx) {
+                if (paymentDonutChartInstance) paymentDonutChartInstance.destroy();
+                paymentDonutChartInstance = new Chart(donutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Credit/Debit Card', 'UPI', 'Cash & Other'],
+                        datasets: [{
+                            data: [cardTotal, upiTotal, cashTotal],
+                            backgroundColor: ['#818cf8', '#fcd34d', '#34d399'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Stacked Bar Chart
+            const barCtx = document.getElementById('paymentBarChart');
+            if (barCtx) {
+                if (paymentBarChartInstance) paymentBarChartInstance.destroy();
+                paymentBarChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: monthsData.map(m => m.label),
+                        datasets: [
+                            { label: 'Card', data: monthsData.map(m => m.card), backgroundColor: '#818cf8', borderRadius: {topLeft: 6, bottomLeft: 6} },
+                            { label: 'UPI', data: monthsData.map(m => m.upi), backgroundColor: '#fcd34d' },
+                            { label: 'Cash', data: monthsData.map(m => m.cash), backgroundColor: '#34d399', borderRadius: {topRight: 6, bottomRight: 6} }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true, display: false },
+                            y: { stacked: true, grid: { display: false }, border: { display: false }, ticks: { color: '#94a3b8' } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+
+        window.filterPaymentMode = function(mode) {
+            // Update active button state
+            document.querySelectorAll('.pm-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-filter') === mode) {
+                    btn.classList.add('active');
+                }
+            });
+
+            const list = document.getElementById('pmTransactionsList');
+            if (!list) return;
+
+            const filtered = allTransactions.filter(tx => {
+                if (tx.type !== 'expense') return false;
+                const pm = tx.paymentMethod || 'Other';
+                let group = 'Cash';
+                if (pm.includes('Card')) group = 'Card';
+                else if (pm.includes('UPI') || pm.includes('Wallet')) group = 'UPI';
+
+                if (mode === 'All') return true;
+                return group === mode;
+            }).slice(0, 15); // Show latest 15
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--text-secondary);">No transactions found</td></tr>';
+                return;
+            }
+
+            const html = filtered.map(tx => {
+                let dateStr = 'N/A';
+                try {
+                    const dateObj = tx.date?.toDate?.() || new Date(tx.date);
+                    dateStr = dateObj.toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' });
+                } catch (e) {}
+
+                const pm = tx.paymentMethod || 'Other';
+                let group = 'Cash';
+                if (pm.includes('Card')) group = 'Card';
+                else if (pm.includes('UPI') || pm.includes('Wallet')) group = 'UPI';
+
+                const badgeColor = group === 'Card' ? 'background: rgba(99,102,241,0.15); color: #818cf8;' : 
+                                   group === 'UPI' ? 'background: rgba(245,158,11,0.15); color: #fbbf24;' : 
+                                   'background: rgba(16,185,129,0.15); color: #34d399;';
+
+                return `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                        <td style="padding: 14px 12px; font-size: 13px; color: var(--text-primary);">${dateStr}</td>
+                        <td style="padding: 14px 12px; font-size: 13px; color: var(--text-primary); font-weight: 500;">${tx.description}</td>
+                        <td style="padding: 14px 12px; font-size: 13px; color: var(--text-secondary);">${tx.category}</td>
+                        <td style="padding: 14px 12px;">
+                            <span style="font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; ${badgeColor}">${group}</span>
+                        </td>
+                        <td style="padding: 14px 12px; text-align: right; font-size: 14px; font-weight: 600; color: var(--danger); font-family: 'Outfit', sans-serif;">
+                            -₹${(tx.amount || 0).toLocaleString('en-IN')}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            list.innerHTML = html;
+        };
 
         // ============ SPENDING FORECAST ============
         function calculateForecast(transactions) {
@@ -2244,14 +2576,6 @@
             return anomalies;
         }
 
-        // ============ MONTHLY REPORT DETAILS ============
-        function updateMonthlyReportDetails(transactions) {
-            const now = new Date();
-            const monthLabel = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-            const docLabel = document.getElementById('monthlyReportDate');
-            if (docLabel) docLabel.textContent = monthLabel;
-        }
-
         // ============ BEHAVIORAL INSIGHTS ============
         function getBehavioralInsights(topCategories, trend, totalSpent, avgDaily, budgetLimit) {
             const insights = [];
@@ -2428,369 +2752,7 @@
             };
         }
 
-        // ============ PDF REPORT GENERATOR ============
-        function generatePDFReport(transactions) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-
-            const now = new Date();
-            const monthLabel = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-            // Filter this month's transactions
-            const monthTransactions = transactions.filter(tx => {
-                const txDate = tx.date?.toDate?.() || new Date(tx.date);
-                return txDate >= monthStart && txDate <= now;
-            });
-
-            let totalIncome = 0, totalExpense = 0;
-            const categorySpend = {};
-            monthTransactions.forEach(tx => {
-                if (tx.type === 'income') {
-                    totalIncome += tx.amount;
-                } else {
-                    totalExpense += tx.amount;
-                    categorySpend[tx.category] = (categorySpend[tx.category] || 0) + tx.amount;
-                }
-            });
-
-            const savings = totalIncome - totalExpense;
-            const budgetUtilization = BUDGET_LIMIT > 0 ? (totalExpense / BUDGET_LIMIT) * 100 : 0;
-            const savingsRate = totalIncome > 0 ? (savings / totalIncome) * 100 : 0;
-
-            const fmt = (n) => `Rs.${Number(n || 0).toLocaleString('en-IN')}`;
-            const pct = (n) => `${Number(n || 0).toFixed(1)}%`;
-
-            // Color Palette
-            const cBlue = [37, 99, 235];
-            const cGreen = [16, 185, 129];
-            const cRed = [239, 68, 68];
-            const cDark = [30, 41, 59];
-            const cGrey = [100, 116, 139];
-
-            // PAGE 1: COVER
-            // Header band
-            doc.setFillColor(37, 99, 235);
-            doc.rect(0, 0, 210, 75, 'F');
-
-            // Logo Text
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(28);
-            doc.setTextColor(255, 255, 255);
-            doc.text('ExpenseCloud', 105, 30, { align: 'center' });
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(13);
-            doc.setTextColor(220, 225, 255);
-            doc.text('Personal Finance Manager Statement', 105, 40, { align: 'center' });
-
-            // Month Badge
-            doc.setFillColor(255, 255, 255, 0.15);
-            doc.roundedRect(65, 50, 80, 15, 3, 3, 'F');
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(15);
-            doc.setTextColor(255, 255, 255);
-            doc.text(monthLabel, 105, 60, { align: 'center' });
-
-            // Prepared for
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(11);
-            doc.setTextColor(30, 41, 59);
-            doc.text(`Prepared for: ${currentUser.email}`, 20, 95);
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 20, 102);
-
-            // Divider line
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.5);
-            doc.line(20, 110, 190, 110);
-
-            // Summary KPI boxes (x, y, w, h)
-            const stats = [
-                { label: 'Total Income', value: fmt(totalIncome), color: cGreen },
-                { label: 'Total Expense', value: fmt(totalExpense), color: cRed },
-                { label: 'Net Savings', value: fmt(savings), color: savings >= 0 ? cGreen : cRed },
-                { label: 'Budget Used', value: pct(budgetUtilization), color: budgetUtilization > 100 ? cRed : cBlue }
-            ];
-
-            const colW = (210 - 40) / 4;
-            stats.forEach((s, idx) => {
-                const x = 20 + idx * colW;
-                doc.setFillColor(248, 250, 252);
-                doc.roundedRect(x + 2, 118, colW - 4, 30, 2, 2, 'F');
-                
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8);
-                doc.setTextColor(100, 116, 139);
-                doc.text(s.label, x + 6, 126);
-
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(11);
-                doc.setTextColor(s.color[0], s.color[1], s.color[2]);
-                doc.text(s.value, x + 6, 138);
-            });
-
-            // Quick note on Cover Page
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.text('This statement summarizes all transactions logged in the ExpenseCloud application', 105, 175, { align: 'center' });
-            doc.text('during the reporting month. Utilize this report to monitor budget targets and spending habits.', 105, 181, { align: 'center' });
-
-            // Page Number Footer
-            _addFooter(doc, 1, 4, monthLabel);
-
-            // PAGE 2: CATEGORY BREAKDOWN
-            doc.addPage();
-            _sectionHeader(doc, 'Category Breakdown', cBlue);
-
-            const sortedCats = Object.entries(categorySpend).sort((a, b) => b[1] - a[1]);
-            if (sortedCats.length === 0) {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(11);
-                doc.setTextColor(100, 116, 139);
-                doc.text('No expense transactions recorded this month.', 20, 50);
-            } else {
-                const tableBody = sortedCats.map(([cat, amt], idx) => {
-                    const share = totalExpense > 0 ? (amt / totalExpense) * 100 : 0;
-                    return [
-                        String(idx + 1),
-                        cat,
-                        fmt(amt),
-                        pct(share)
-                    ];
-                });
-
-                doc.autoTable({
-                    head: [['#', 'Category', 'Amount', '% Share']],
-                    body: tableBody,
-                    startY: 45,
-                    headStyles: { fillColor: cBlue },
-                    theme: 'striped',
-                    styles: { fontSize: 10, cellPadding: 4 }
-                });
-            }
-            _addFooter(doc, 2, 4, monthLabel);
-
-            // PAGE 3: ANOMALIES
-            doc.addPage();
-            _sectionHeader(doc, 'Anomaly Highlights', cRed);
-
-            const allAnomalies = calculateAnomalies(transactions);
-            const monthAnomalies = allAnomalies.filter(tx => {
-                const txDate = tx.date?.toDate?.() || new Date(tx.date);
-                return txDate >= monthStart && txDate <= now;
-            });
-
-            if (monthAnomalies.length === 0) {
-                doc.setFillColor(248, 250, 252);
-                doc.roundedRect(20, 45, 170, 25, 2, 2, 'F');
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(11);
-                doc.setTextColor(16, 185, 129);
-                doc.text('✓ No anomalies detected this month!', 105, 55, { align: 'center' });
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(9);
-                doc.setTextColor(100, 116, 139);
-                doc.text('All transactions were within normal category spending patterns.', 105, 62, { align: 'center' });
-            } else {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                doc.setTextColor(100, 116, 139);
-                doc.text(`${monthAnomalies.length} transaction(s) flagged as unusually high compared to historical averages:`, 20, 48);
-
-                const anomalyBody = monthAnomalies.map(a => {
-                    const date = a.date ? (a.date.toDate?.() || new Date(a.date)).toLocaleDateString('en-IN') : '—';
-                    const multiplier = a.anomalyMultiplier ? `${a.anomalyMultiplier.toFixed(1)}x` : '—';
-                    return [
-                        date,
-                        a.category || '—',
-                        fmt(a.amount),
-                        fmt(a.categoryAverage),
-                        multiplier
-                    ];
-                });
-
-                doc.autoTable({
-                    head: [['Date', 'Category', 'Amount', 'Avg Spend', 'Multiplier']],
-                    body: anomalyBody,
-                    startY: 55,
-                    headStyles: { fillColor: cRed },
-                    theme: 'striped',
-                    styles: { fontSize: 9, cellPadding: 3.5 }
-                });
-            }
-            _addFooter(doc, 3, 4, monthLabel);
-
-            // PAGE 4: SAVINGS ANALYSIS & TIPS
-            doc.addPage();
-            _sectionHeader(doc, 'Savings Analysis & Tips', cGreen);
-
-            // Stats row
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(20, 45, 170, 26, 2, 2, 'F');
-
-            // Savings Rate
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(100, 116, 139);
-            doc.text('Savings Rate', 30, 52);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.setTextColor(savingsRate >= 20 ? cGreen[0] : cRed[0], savingsRate >= 20 ? cGreen[1] : cRed[1], savingsRate >= 20 ? cGreen[2] : cRed[2]);
-            doc.text(pct(savingsRate), 30, 62);
-
-            // Budget Utilization
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(100, 116, 139);
-            doc.text('Budget Utilization', 95, 52);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.setTextColor(budgetUtilization > 100 ? cRed[0] : cBlue[0], budgetUtilization > 100 ? cRed[1] : cBlue[1], budgetUtilization > 100 ? cRed[2] : cBlue[2]);
-            doc.text(pct(budgetUtilization), 95, 62);
-
-            // Net Savings
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(100, 116, 139);
-            doc.text('Net Savings', 150, 52);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.setTextColor(savings >= 0 ? cGreen[0] : cRed[0], savings >= 0 ? cGreen[1] : cRed[1], savings >= 0 ? cGreen[2] : cRed[2]);
-            doc.text(fmt(savings), 150, 62);
-
-            // Budget progress bar in PDF
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(30, 41, 59);
-            doc.text('Monthly Budget Progress', 20, 85);
-
-            // draw background bar
-            doc.setFillColor(226, 232, 240);
-            doc.roundedRect(20, 90, 170, 6, 1, 1, 'F');
-            
-            // draw progress fill bar
-            const barW = Math.min((budgetUtilization / 100) * 170, 170);
-            if (barW > 0) {
-                const fillCol = budgetUtilization > 100 ? cRed : budgetUtilization > 80 ? [245, 158, 11] : cGreen;
-                doc.setFillColor(fillCol[0], fillCol[1], fillCol[2]);
-                doc.roundedRect(20, 90, barW, 6, 1, 1, 'F');
-            }
-
-            // Recommendations
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.setTextColor(30, 41, 59);
-            doc.text('Personalized Recommendations', 20, 112);
-
-            const tips = _generateTips(savingsRate, budgetUtilization, sortedCats);
-            tips.forEach((tip, idx) => {
-                const y = 120 + idx * 22;
-                doc.setFillColor(248, 250, 252);
-                doc.roundedRect(20, y, 170, 18, 2, 2, 'F');
-                
-                // Draw number circle
-                doc.setFillColor(37, 99, 235);
-                doc.circle(28, y + 9, 3, 'F');
-                
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(9);
-                doc.setTextColor(255, 255, 255);
-                doc.text(String(idx + 1), 28, y + 12, { align: 'center' });
-
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8.5);
-                doc.setTextColor(30, 41, 59);
-                doc.text(tip, 36, y + 7, { width: 148 });
-            });
-
-            _addFooter(doc, 4, 4, monthLabel);
-
-            return doc;
-        }
-
-        function _sectionHeader(doc, title, color) {
-            doc.setFillColor(color[0], color[1], color[2]);
-            doc.rect(0, 0, 210, 32, 'F');
-            
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(255, 255, 255);
-            doc.text(title, 20, 18);
-            
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(220, 225, 255);
-            doc.text('ExpenseCloud Financial Report Statement', 20, 25);
-        }
-
-        function _addFooter(doc, pageNum, totalPages, monthLabel) {
-            doc.setDrawColor(226, 232, 240);
-            doc.setLineWidth(0.25);
-            doc.line(20, 280, 190, 280);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7.5);
-            doc.setTextColor(148, 163, 184);
-            doc.text(`ExpenseCloud Financial Report Statement — ${monthLabel}`, 20, 285);
-            doc.text(`Page ${pageNum} of ${totalPages}`, 190, 285, { align: 'right' });
-        }
-
-        function _generateTips(savingsRate, budgetUtilization, sortedCats) {
-            const tips = [];
-            const fmt = (n) => `Rs.${Number(n || 0).toLocaleString('en-IN')}`;
-
-            if (savingsRate < 10) {
-                tips.push('Your savings rate is below 10%. Try cutting discretionary spending. Setting tighter category budgets in ExpenseCloud will help.');
-            } else if (savingsRate >= 20) {
-                tips.push('Excellent savings rate! Your discipline is paying off. Consider investing a portion of these monthly savings.');
-            } else {
-                tips.push("You're on track! Review your dining-out or shopping logs to find areas where you can squeeze out an extra 5% savings.");
-            }
-
-            if (budgetUtilization > 100) {
-                tips.push(`You overspent your budget by ${(budgetUtilization - 100).toFixed(0)}%. Set strict category-level limits to receive warnings before you overshoot.`);
-            } else if (budgetUtilization > 85) {
-                tips.push("You're close to your budget ceiling. Consider deferring non-essential purchases next month to remain in the safe zone.");
-            } else {
-                tips.push('Excellent budget utilization! You have successfully completed the month inside your spending parameters.');
-            }
-
-            if (sortedCats.length > 0) {
-                const topCat = sortedCats[0];
-                tips.push(`Your highest spending category is "${topCat[0]}" at ${fmt(topCat[1])}. Create a specific alert limit for it in Settings.`);
-            } else {
-                tips.push('Track category-wise expenses consistently to receive more personalized insights and tips.');
-            }
-
-            return tips.slice(0, 3);
-        }
-
-        // ============ REPORT DISPATCH ACTIONS ============
-        window.downloadMonthlyReport = function() {
-            try {
-                if (!allTransactions || allTransactions.length === 0) {
-                    showToast('⚠️ No transaction data available to generate report', 'warning');
-                    return;
-                }
-                showToast('⏳ Generating report...', 'info');
-                const doc = generatePDFReport(allTransactions);
-                const monthLabel = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }).replace(/\s/g, '_');
-                doc.save(`ExpenseCloud_Report_${monthLabel}.pdf`);
-                showToast('✅ Report downloaded successfully!', 'success');
-            } catch (error) {
-                console.error(error);
-                showToast('❌ Error generating PDF: ' + error.message, 'error');
-            }
-        };
-
-        async function sendEmail({ subject, messageHtml, attachmentBase64 = null, attachmentFilename = null }) {
+        async function sendEmail({ subject, messageHtml, attachmentBase64 = null, attachmentFilename = null, extraParams = {} }) {
             if (!emailSettings.serviceId || !emailSettings.templateId || !emailSettings.publicKey) {
                 showToast('🔌 Please configure and save your EmailJS settings first', 'warning');
                 return false;
@@ -2805,7 +2767,8 @@
                 const templateParams = {
                     to_email: emailSettings.recipientEmail,
                     subject: subject,
-                    message_html: messageHtml
+                    message_html: messageHtml,
+                    ...extraParams
                 };
 
                 // Add attachment if provided
@@ -2947,9 +2910,21 @@
                     </div>
                 `;
 
+                const textCatRows = topCategories.map((cat, i) => `${i + 1}. ${cat.category}: ₹${cat.amount.toLocaleString('en-IN')} (${cat.count} txns)`).join('\n');
+                
+                const extraParams = {
+                    week_ending: weekEnding,
+                    income: weekIncome.toLocaleString('en-IN'),
+                    expenses: totalSpent.toLocaleString('en-IN'),
+                    savings: savings.toLocaleString('en-IN'),
+                    spending_breakdown: textCatRows,
+                    insights: insights.join('\n\n')
+                };
+
                 const success = await sendEmail({
                     subject: `📊 Your Weekly Spending Digest — ${weekEnding}`,
-                    messageHtml
+                    messageHtml,
+                    extraParams
                 });
 
                 if (success) {
@@ -2959,144 +2934,13 @@
                 }
             } catch (error) {
                 console.error(error);
-                showToast('❌ Error sending Weekly Digest: ' + error.message, 'error');
+                showToast('❌ Error sending Weekly Digest: ' + (error.message || error.text || JSON.stringify(error)), 'error');
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
         };
 
-        window.emailMonthlyReport = async function() {
-            if (!currentUser) {
-                showToast('❌ You must be logged in to send reports', 'error');
-                return;
-            }
-            if (!allTransactions || allTransactions.length === 0) {
-                showToast('⚠️ No transaction data available to email', 'warning');
-                return;
-            }
-            if (!emailSettings.serviceId || !emailSettings.templateId || !emailSettings.publicKey) {
-                showToast('🔌 Please complete the Email Configuration first', 'warning');
-                return;
-            }
-
-            const btn = document.getElementById('btnEmailMonthlyReport');
-            const originalText = btn.textContent;
-            btn.textContent = '⏳ Sending...';
-            btn.disabled = true;
-
-            try {
-                const doc = generatePDFReport(allTransactions);
-                const monthLabel = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-                
-                // Get month metrics
-                const now = new Date();
-                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                const monthTransactions = allTransactions.filter(tx => {
-                    const txDate = tx.date?.toDate?.() || new Date(tx.date);
-                    return txDate >= monthStart && txDate <= now;
-                });
-
-                let totalIncome = 0, totalExpense = 0;
-                monthTransactions.forEach(tx => {
-                    if (tx.type === 'income') {
-                        totalIncome += tx.amount;
-                    } else {
-                        totalExpense += tx.amount;
-                    }
-                });
-
-                const savings = totalIncome - totalExpense;
-                const budgetUtilization = BUDGET_LIMIT > 0 ? (totalExpense / BUDGET_LIMIT) * 100 : 0;
-                const savingsColor = savings >= 0 ? '#10b981' : '#ef4444';
-                const budgetColor = budgetUtilization > 100 ? '#ef4444' : '#2563eb';
-
-                const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
-
-                const messageHtml = `
-                    <div style="max-width:600px; margin:0 auto; background:#1e293b; border-radius:16px; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.4); font-family:sans-serif; color:#f8fafc; padding:0;">
-                        <div style="background:linear-gradient(135deg,#2563eb 0%,#10b981 100%); padding:40px; text-align:center;">
-                            <div style="font-size:32px; font-weight:800; color:#ffffff;">💰 ExpenseCloud</div>
-                            <div style="font-size:14px; color:rgba(255,255,255,0.8); margin-top:6px;">Personal Finance Manager Statement</div>
-                            <div style="margin-top:18px; background:rgba(255,255,255,0.15); border-radius:50px; padding:8px 24px; display:inline-block;">
-                                <span style="font-size:15px; font-weight:700; color:#ffffff;">📄 ${monthLabel} Financial Report</span>
-                            </div>
-                        </div>
-                        <div style="padding:32px; background:#1e293b; text-align:left;">
-                            <p style="font-size:15px; color:#cbd5e1; margin:0 0 24px 0; line-height:1.6;">
-                                Hi there! Your <strong style="color:#f8fafc;">${monthLabel}</strong> financial report has been generated.
-                                It's attached as a PDF — open it for your full category breakdown, anomaly highlights, and personalised savings recommendations.
-                            </p>
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
-                                <tr>
-                                    <td width="50%" style="padding-right:8px;">
-                                        <div style="background:#0f172a; border-radius:12px; padding:20px; text-align:center;">
-                                            <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:8px;">Income</div>
-                                            <div style="font-size:22px; font-weight:800; color:#10b981;">${fmt(totalIncome)}</div>
-                                        </div>
-                                    </td>
-                                    <td width="50%" style="padding-left:8px;">
-                                        <div style="background:#0f172a; border-radius:12px; padding:20px; text-align:center;">
-                                            <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:8px;">Expenses</div>
-                                            <div style="font-size:22px; font-weight:800; color:#ef4444;">${fmt(totalExpense)}</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr><td colspan="2" style="height:12px;"></td></tr>
-                                <tr>
-                                    <td width="50%" style="padding-right:8px;">
-                                        <div style="background:#0f172a; border-radius:12px; padding:20px; text-align:center;">
-                                            <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:8px;">Net Savings</div>
-                                            <div style="font-size:22px; font-weight:800; color:${savingsColor};">${fmt(savings)}</div>
-                                        </div>
-                                    </td>
-                                    <td width="50%" style="padding-left:8px;">
-                                        <div style="background:#0f172a; border-radius:12px; padding:20px; text-align:center;">
-                                            <div style="font-size:11px; color:#64748b; font-weight:600; text-transform:uppercase; margin-bottom:8px;">Budget Used</div>
-                                            <div style="font-size:22px; font-weight:800; color:${budgetColor};">${budgetUtilization.toFixed(1)}%</div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
-                            <div style="background:#0f172a; border-left:4px solid #2563eb; border-radius:0 8px 8px 0; padding:14px; margin-top:12px;">
-                                <p style="margin:0; font-size:13px; color:#94a3b8; line-height:1.5;">
-                                    📎 <strong style="color:#f8fafc;">PDF attached:</strong> Your full report statement including category analysis, anomaly alerts, and savings recommendations is in the attachment below.
-                                </p>
-                            </div>
-                        </div>
-                        <div style="padding:20px; border-top:1px solid rgba(255,255,255,0.06); text-align:center; background:#182232;">
-                            <p style="font-size:12px; color:#64748b; margin:0;">
-                                This report is generated by ExpenseCloud.<br>
-                                © ${new Date().getFullYear()} ExpenseCloud. All rights reserved.
-                            </p>
-                        </div>
-                    </div>
-                `;
-
-                // Generate base64 Data URI from jsPDF
-                const pdfBase64 = doc.output('datauristring');
-                const filename = `ExpenseCloud_Report_${monthLabel.replace(/\s/g, '_')}.pdf`;
-
-                const success = await sendEmail({
-                    subject: `📄 Your ${monthLabel} ExpenseCloud Financial Report`,
-                    messageHtml,
-                    attachmentBase64: pdfBase64,
-                    attachmentFilename: filename
-                });
-
-                if (success) {
-                    showToast('✅ Monthly PDF report emailed successfully!', 'success');
-                } else {
-                    showToast('❌ Failed to send email. Check configuration.', 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                showToast('❌ Error emailing report: ' + error.message, 'error');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        };
 
         // ============ UI CONTROLS ============
         window.showScreen = function(screenId) {
