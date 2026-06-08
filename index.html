@@ -1616,6 +1616,38 @@
 
                     <!-- SETTINGS -->
                     <div id="settings" class="screen">
+
+                        <!-- Monthly Budget Limit -->
+                        <div class="report-section" style="margin-bottom: 20px;">
+                            <div class="report-header">
+                                <div class="report-title">💰 Monthly Budget Limit</div>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
+                                Set your total monthly spending limit. You will receive a <strong style="color: var(--warning);">warning at 80%</strong> and a <strong style="color: var(--danger);">critical alert when exceeded</strong>.
+                            </p>
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 180px;">
+                                    <label class="form-label">Monthly Budget (₹)</label>
+                                    <input type="number" id="budgetLimitInput" class="form-input" placeholder="e.g. 50000" min="100" style="margin-top: 6px;">
+                                </div>
+                                <div style="padding-top: 22px;">
+                                    <button class="btn btn-primary" onclick="saveBudgetLimit()">💾 Save Budget</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Push Notifications -->
+                        <div class="report-section" style="margin-bottom: 20px;">
+                            <div class="report-header">
+                                <div class="report-title">🔔 Push Notifications</div>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.6;">
+                                Enable browser push notifications to receive <strong style="color: var(--accent-primary);">budget alerts</strong> and <strong style="color: var(--warning);">anomaly warnings</strong> instantly — even when the app is in the background.
+                            </p>
+                            <button class="btn btn-primary" id="btnEnableNotifications" onclick="requestNotificationPermission()">🔔 Enable Push Notifications</button>
+                        </div>
+
+                        <!-- Category Budgets -->
                         <div class="section">
                             <h3 class="section-title">⚙️ Category Budgets</h3>
                             <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Adjust your monthly limits. Reaching these amounts triggers warning alerts.</p>
@@ -1843,7 +1875,8 @@
         let emailSettings = {};
         let allTransactions = [];
         let currentWeeklyData = null;
-        const BUDGET_LIMIT = 50000;
+        let BUDGET_LIMIT = 50000; // dynamic — loaded from Firestore
+        let notifiedAnomalyIds = new Set(); // track already-notified anomalies
 
         const CATEGORIES = ['Food & Dining', 'Transport', 'Entertainment', 'Utilities', 'Healthcare', 'Shopping', 'Salary', 'Other'];
 
@@ -1925,13 +1958,97 @@
             }
         });
 
+        // ============ PUSH NOTIFICATIONS ============
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                showToast('❌ Your browser does not support notifications', 'error');
+                return;
+            }
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                showToast('✅ Push notifications enabled!', 'success');
+                updateNotificationBtn();
+                new Notification('🔔 ExpenseCloud Notifications', {
+                    body: 'You will now receive budget and anomaly alerts.',
+                    icon: 'https://em-content.zobj.net/source/apple/354/money-bag_1f4b0.png'
+                });
+            } else {
+                showToast('⚠️ Notification permission denied.', 'warning');
+            }
+        }
+        window.requestNotificationPermission = requestNotificationPermission;
+
+        function updateNotificationBtn() {
+            const btn = document.getElementById('btnEnableNotifications');
+            if (!btn) return;
+            const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
+            if (perm === 'granted') {
+                btn.textContent = '✅ Notifications Enabled';
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+            } else if (perm === 'unsupported') {
+                btn.textContent = '❌ Not Supported';
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
+            } else {
+                btn.textContent = '🔔 Enable Push Notifications';
+                btn.disabled = false;
+            }
+        }
+
+        function sendPushNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body,
+                    icon: 'https://em-content.zobj.net/source/apple/354/money-bag_1f4b0.png',
+                    badge: 'https://em-content.zobj.net/source/apple/354/money-bag_1f4b0.png'
+                });
+            }
+        }
+
+        // ============ BUDGET LIMIT (FIRESTORE) ============
+        async function loadBudgetLimit() {
+            try {
+                const ref = doc(db, 'users', currentUser.uid, 'settings', 'budget');
+                const snap = await getDoc(ref);
+                if (snap.exists() && snap.data().limit) {
+                    BUDGET_LIMIT = parseFloat(snap.data().limit);
+                }
+                const input = document.getElementById('budgetLimitInput');
+                if (input) input.value = BUDGET_LIMIT;
+            } catch (e) {
+                console.error('Error loading budget limit:', e);
+            }
+        }
+
+        async function saveBudgetLimit() {
+            const val = parseFloat(document.getElementById('budgetLimitInput').value);
+            if (!val || val < 100) {
+                showToast('⚠️ Please enter a valid budget limit (min ₹100)', 'warning');
+                return;
+            }
+            try {
+                const ref = doc(db, 'users', currentUser.uid, 'settings', 'budget');
+                await setDoc(ref, { limit: val }, { merge: true });
+                BUDGET_LIMIT = val;
+                showToast(`✅ Monthly budget set to ₹${val.toLocaleString('en-IN')}`, 'success');
+                // Re-run dashboard with updated limit
+                updateDashboard(allTransactions);
+            } catch (e) {
+                showToast('❌ Error saving budget limit', 'error');
+            }
+        }
+        window.saveBudgetLimit = saveBudgetLimit;
+
         // ============ LOAD APP ============
         async function loadApp() {
             await loadCategoryLimits();
             await loadEmailSettings();
+            await loadBudgetLimit();
             listenToTransactions();
             document.getElementById('txDate').valueAsDate = new Date();
             loadSettings();
+            updateNotificationBtn();
         }
 
         // ============ EMAIL SETTINGS (EMAILJS) ============
@@ -2379,11 +2496,14 @@
             document.getElementById('budgetProgress').style.width = `${Math.min(budgetPercent, 100)}%`;
             document.getElementById('expenseStatus').textContent = `${budgetPercent.toFixed(1)}% of ₹${BUDGET_LIMIT.toLocaleString('en-IN')}`;
 
-            // Budget alerts
+            // Budget alerts (toast + push notification)
             if (budgetPercent > 100) {
-                showToast(`🚨 Budget limit exceeded by ₹${(monthExpense - BUDGET_LIMIT).toLocaleString('en-IN')}!`, 'error');
+                const over = (monthExpense - BUDGET_LIMIT).toLocaleString('en-IN');
+                showToast(`🚨 Budget limit exceeded by ₹${over}!`, 'error');
+                sendPushNotification('🚨 Budget Exceeded!', `You've exceeded your monthly budget by ₹${over}.`);
             } else if (budgetPercent > 80) {
                 showToast(`⚠️ Warning: You have utilized ${budgetPercent.toFixed(0)}% of your monthly budget`, 'warning');
+                sendPushNotification('⚠️ Budget Warning', `You've used ${budgetPercent.toFixed(0)}% of your ₹${BUDGET_LIMIT.toLocaleString('en-IN')} monthly budget.`);
             }
 
             // Forecast
@@ -2547,7 +2667,7 @@
             const anomalies = [];
             const categoryStats = {};
 
-            // Calculate category averages
+            // Calculate category averages (exclude the transaction itself for fairness)
             transactions.forEach(tx => {
                 if (tx.type === 'expense') {
                     if (!categoryStats[tx.category]) {
@@ -2557,18 +2677,30 @@
                 }
             });
 
-            // Detect anomalies
+            // Detect anomalies & fire push notifications for new ones
             transactions.forEach(tx => {
                 if (tx.type === 'expense' && categoryStats[tx.category]) {
                     const amounts = categoryStats[tx.category];
                     const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
 
                     if (tx.amount > avg * 1.5) {
-                        anomalies.push({
+                        const anomaly = {
                             ...tx,
                             categoryAverage: avg,
                             anomalyMultiplier: tx.amount / avg
-                        });
+                        };
+                        anomalies.push(anomaly);
+
+                        // Only notify once per anomaly transaction
+                        if (!notifiedAnomalyIds.has(tx.id)) {
+                            notifiedAnomalyIds.add(tx.id);
+                            const fmt = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+                            const multiplier = (tx.amount / avg).toFixed(1);
+                            sendPushNotification(
+                                `⚠️ Unusual Spending in ${tx.category}`,
+                                `"${tx.description}" is ${fmt(tx.amount)} — ${multiplier}x your average of ${fmt(avg)} in this category.`
+                            );
+                        }
                     }
                 }
             });
