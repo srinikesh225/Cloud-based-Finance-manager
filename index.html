@@ -3055,14 +3055,18 @@
                 `;
 
                 const textCatRows = topCategories.map((cat, i) => `${i + 1}. ${cat.category}: ₹${cat.amount.toLocaleString('en-IN')} (${cat.count} txns)`).join('\n');
-                
+
+                // Strip HTML tags to get plain text for email template variables
+                const stripHtml = (html) => html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim();
+                const plainInsights = insights.map((ins, i) => `${i + 1}. ${stripHtml(ins)}`).join('\n\n');
+
                 const extraParams = {
                     week_ending: weekEnding,
-                    income: weekIncome.toLocaleString('en-IN'),
-                    expenses: totalSpent.toLocaleString('en-IN'),
-                    savings: savings.toLocaleString('en-IN'),
-                    spending_breakdown: textCatRows,
-                    insights: insights.join('\n\n')
+                    income: '₹' + weekIncome.toLocaleString('en-IN'),
+                    expenses: '₹' + totalSpent.toLocaleString('en-IN'),
+                    savings: '₹' + savings.toLocaleString('en-IN'),
+                    spending_breakdown: textCatRows || 'No expenses recorded this week.',
+                    insights: plainInsights || 'No insights available for this period.'
                 };
 
                 const success = await sendEmail({
