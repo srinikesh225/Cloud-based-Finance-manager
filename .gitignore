@@ -1,0 +1,37 @@
+# Vercel
+.vercel
+
+# Node dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables (sensitive)
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# Keep .env.example and .env.expensecloud-f6a20 (non-sensitive templates)
+!**/.env.example
+!**/.env.expensecloud-f6a20
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Firebase
+.firebase/
+firebase-debug.log
